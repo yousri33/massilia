@@ -1,26 +1,64 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Captain Contrat Inspired Palette */
+  --navy: #1D3D5D;
+  --coral: #EF6C77;
+  --cream: #ecd5b3;
+  --white: #FFFFFF;
+  --dark-navy: #132A41;
+
+  /* shadcn/ui compatibility tokens */
+  --background: #ecd5b3;
+  --foreground: #1D3D5D;
+  --card: #ecd5b3;
+  --card-foreground: #1D3D5D;
+  --popover: #ecd5b3;
+  --popover-foreground: #1D3D5D;
+  --primary: #1D3D5D;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EF6C77;
+  --secondary-foreground: #FFFFFF;
+  --muted: #E5E7EB;
+  --muted-foreground: #4B5563;
+  --accent: #EF6C77;
+  --accent-foreground: #FFFFFF;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: #D1D5DB;
+  --input: #FFFFFF;
+  --ring: #1D3D5D;
+  --radius: 0.5rem;
 }
 
 @theme inline {
+  --color-navy: var(--navy);
+  --color-coral: var(--coral);
+  --color-cream: var(--cream);
+  --color-dark-navy: var(--dark-navy);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --font-handwritten: var(--font-handwritten);
+  --animate-marquee: marquee var(--duration) linear infinite;
+  
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(-100% - var(--gap))); }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  .font-handwritten {
+    font-family: var(--font-handwritten), cursive;
+  }
+  html {
+    font-size: 80%; /* Global 20% downscale of all REM-based units */
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
 }
