@@ -117,7 +117,7 @@ export const Hero = () => {
             initial={{ opacity: 0, scale: 0.9, x: 20 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
-            className="relative order-1 lg:order-2"
+            className="relative order-1 lg:order-2 hidden lg:block"
           >
             <div className="relative z-10 w-full aspect-square md:aspect-[4/3] overflow-hidden rounded-[2.5rem] group">
               <video 

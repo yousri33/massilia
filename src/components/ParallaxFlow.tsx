@@ -68,25 +68,7 @@ const HeroSection = () => {
             </motion.span>
           </h1>
 
-          {/* Mobile Video Area */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="lg:hidden w-full mb-10 -mt-8 transition-all"
-          >
-            <div className="relative z-10 w-full aspect-[4/3] overflow-hidden">
-              <video
-                src="/kling_20260323_Image_to_Video_animate_th_1331_0.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="relative w-[110%] left-[-5%] h-[110%] object-cover object-bottom"
-              />
-            </div>
-          </motion.div>
+          {/* Mobile Video Area Removed */}
 
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
