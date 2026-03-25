@@ -17,7 +17,7 @@ export const Hero = () => {
     <section 
       className="relative min-h-screen pt-44 pb-32 overflow-hidden flex items-center bg-background"
     >
-      {/* Background Shapes Removed to stay seamless with #eadac7 */}
+      {/* Background Shapes Removed to stay seamless with the video */}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -66,7 +66,7 @@ export const Hero = () => {
               animate="visible"
               className="text-lg sm:text-xl text-slate-600 max-w-lg mb-12 leading-relaxed"
             >
-              Juristes, experts-comptables et avocats : toutes leurs expertises réunies sur <span className="font-bold text-navy">la plateforme #1 pour entreprendre.</span>
+              Juristes et avocats : toutes leurs expertises réunies sur <span className="font-bold text-navy">la plateforme #1 pour entreprendre.</span>
             </motion.p>
 
             <motion.div

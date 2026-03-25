@@ -12,7 +12,6 @@ export function Header() {
 
 	const services = [
 		{ label: "Création d'entreprise", href: '/creation', description: 'Immatriculation rapide' },
-		{ label: 'Comptabilité', href: '/comptabilite', description: 'Gestion fiscale & sociale' },
 		{ label: 'Juridique & Contrats', href: '/juridique', description: 'Avocats & Experts' },
 		{ label: 'Modifications', href: '/modifications', description: 'Évolutions statutaires' },
 	];

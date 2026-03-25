@@ -11,13 +11,7 @@ const services = [
     color: 'bg-navy/10',
     iconColor: 'text-navy'
   },
-  { 
-    title: 'Expertise-Comptable', 
-    desc: 'Déclarations fiscales, approbation des comptes, tenue régulière.', 
-    icon: Calculator,
-    color: 'bg-coral/10',
-    iconColor: 'text-coral'
-  },
+
   { 
     title: 'Modifier mes statuts', 
     desc: 'Transfert de siège, cessions d’actions, augmentations de capital.', 
@@ -70,7 +64,7 @@ export const ServicesGrid = () => {
           <div className="max-w-xl">
             <h2 className="font-serif font-black text-4xl sm:text-5xl lg:text-6xl text-navy leading-[1.1] mb-8">La plateforme pour <br/><span className="text-coral underline decoration-navy decoration-4 underline-offset-8">entreprendre.</span></h2>
             <p className="text-lg text-navy/75 font-medium leading-relaxed">
-              Juristes, experts-comptables et avocats : accédez à une expertise d&apos;élite réunie sur une seule interface digitale.
+              Juristes et avocats : accédez à une expertise d&apos;élite réunie sur une seule interface digitale.
             </p>
           </div>
           <motion.button 

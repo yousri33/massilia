@@ -30,9 +30,9 @@ const packTiers: (PricingTier & { unit: string })[] = [
     color: 'navy',
     features: [
       'Tout le Pack Création',
-      'Expertise-comptable 1 an',
-      'Logiciel de facturation',
-      'Approbation des comptes',
+      'Modèles de contrats',
+      'Logiciel de gestion',
+      'Support prioritaire 24/7',
       'Accès Premium illimité'
     ],
     popular: true,

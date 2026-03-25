@@ -14,13 +14,13 @@ const steps = [
   },
   {
     title: 'Dialogue avec un expert',
-    desc: 'Un juriste ou expert-comptable dédié valide votre dossier sous 24h et répond à toutes vos questions.',
+    desc: 'Un juriste dédié valide votre dossier sous 24h et répond à toutes vos questions.',
     icon: UserCheck,
     num: 2,
   },
   {
     title: 'Obtenez vos documents',
-    desc: 'Kbis, contrats ou bilans : recevez vos documents officiels directement dans votre espace client sécurisé.',
+    desc: 'Kbis, statuts ou contrats : recevez vos documents officiels directement dans votre espace client sécurisé.',
     icon: ShieldCheck,
     num: 3,
   },

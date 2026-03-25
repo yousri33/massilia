@@ -81,7 +81,6 @@ export const Footer = () => {
             <ul className="flex flex-col gap-3.5 text-sm text-navy/80 font-bold uppercase tracking-tight">
               <li><Link href="/modifications" className="hover:text-coral transition-colors">Modification de statuts</Link></li>
               <li><Link href="/juridique" className="hover:text-coral transition-colors">Modèle de contrat</Link></li>
-              <li><Link href="/comptabilite" className="hover:text-coral transition-colors">Approbation des comptes</Link></li>
               <li><Link href="/juridique" className="hover:text-coral transition-colors">Marques & Brevets</Link></li>
             </ul>
           </div>

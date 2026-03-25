@@ -94,7 +94,7 @@ const HeroSection = () => {
             transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
             className="text-lg sm:text-xl text-navy/80 max-w-lg mb-10 leading-relaxed"
           >
-            Juristes, experts-comptables et avocats réunis sur{' '}
+            Juristes et avocats réunis sur{' '}
             <span className="font-bold text-navy">la plateforme #1 pour entreprendre.</span>
           </motion.p>
 

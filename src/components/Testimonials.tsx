@@ -18,7 +18,7 @@ const testimonials = [
       handle: "@lina_ecommerce",
       avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face"
     },
-    text: "Enfin une solution digitale en Algérie qui fonctionne vraiment ! Ma comptabilité est maintenant fluide et automatisée.",
+    text: "Enfin une solution digitale en Algérie qui fonctionne vraiment ! Ma création d'entreprise a été fluide et rapide.",
     href: "#"
   },
   {
