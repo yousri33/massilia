@@ -46,11 +46,8 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 relative">
           {/* Brand & Social */}
           <div className="flex flex-col gap-6">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 bg-navy rounded-xl flex items-center justify-center text-white font-black text-lg group-hover:bg-coral transition-all transform group-hover:rotate-6">L</div>
-              <span className="text-xl font-black tracking-tighter text-navy uppercase">
-                Legal<span className="text-coral">Pilot</span>
-              </span>
+            <Link href="/" className="flex items-center gap-2.5 group hover:scale-105 transition-transform duration-300">
+              <img src="/logo.png" alt="Legal Pilot" className="h-14 w-auto object-contain" />
             </Link>
             <p className="text-sm text-navy/80 font-bold leading-relaxed max-w-xs uppercase tracking-tight">
               Devenez l&apos;entrepreneur que vous avez toujours voulu être. Nous nous occupons de tout l&apos;aspect juridique.

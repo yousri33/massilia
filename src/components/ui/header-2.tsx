@@ -48,12 +48,7 @@ export function Header() {
 				)}
 			>
         <a href="/" className="flex items-center gap-2 group cursor-pointer shrink-0">
-          <div className="w-7 h-7 bg-navy rounded-lg flex items-center justify-center group-hover:bg-coral transition-colors duration-300">
-            <span className="text-white font-bold text-base">L</span>
-          </div>
-          <span className="text-base font-black tracking-tight text-navy hidden sm:inline-block uppercase">
-            Legal<span className="text-coral">Pilot</span>
-          </span>
+          <img src="/logo.png" alt="Legal Pilot" className="h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105" />
         </a>
 
 				<div className="hidden items-center gap-1 md:flex">

@@ -25,6 +25,10 @@ const kalam = Kalam({
 export const metadata: Metadata = {
   title: "Legal Pilot | Votre entreprise, sans effort",
   description: "Bureau Juridique Digital pour entrepreneurs. Création et modifications de statuts.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
