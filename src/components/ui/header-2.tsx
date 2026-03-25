@@ -83,7 +83,7 @@ export function Header() {
 					<a className={cn(buttonVariants({ variant: 'ghost' }), "font-bold text-navy/80 hover:text-coral transition-colors text-sm uppercase tracking-wide")} href="#about">
 						À propos
 					</a>
-					<a href="/login" className={cn(buttonVariants({ variant: 'outline' }), "rounded-full border-navy/10 text-navy font-bold ml-4 text-xs h-9 px-4 uppercase")}>Espace Client</a>
+					<a href="/espace-client" className={cn(buttonVariants({ variant: 'outline' }), "rounded-full border-navy/10 text-navy font-bold ml-4 text-xs h-9 px-4 uppercase")}>Espace Client</a>
 					<Button className="rounded-full bg-navy hover:bg-coral text-white font-bold px-5 h-9 text-xs uppercase tracking-wide">Démarrer</Button>
 				</div>
 				<Button size="icon" variant="ghost" onClick={() => setOpen(!open)} className="md:hidden text-navy hover:bg-transparent">
@@ -128,7 +128,7 @@ export function Header() {
             </a>
 					</div>
 					<div className="flex flex-col gap-4 mb-20">
-						<a href="/login" className={cn(buttonVariants({ variant: 'outline' }), "w-full h-14 rounded-2xl text-base font-black uppercase tracking-widest")}>
+						<a href="/espace-client" className={cn(buttonVariants({ variant: 'outline' }), "w-full h-14 rounded-2xl text-base font-black uppercase tracking-widest")}>
 							Espace Client
 						</a>
 						<Button className="w-full h-14 rounded-2xl bg-navy text-base font-black uppercase tracking-widest hover:bg-coral">Démarrer</Button>
