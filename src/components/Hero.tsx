@@ -15,8 +15,7 @@ const item = {
 export const Hero = () => {
   return (
     <section 
-      className="relative min-h-screen pt-44 pb-32 overflow-hidden flex items-center"
-      style={{ backgroundColor: '#ebd3b7' }}
+      className="relative min-h-screen pt-44 pb-32 overflow-hidden flex items-center bg-background"
     >
       {/* Background Shapes Removed to stay seamless with #eadac7 */}
 

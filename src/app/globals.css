@@ -4,16 +4,16 @@
   /* Captain Contrat Inspired Palette */
   --navy: #1D3D5D;
   --coral: #EF6C77;
-  --cream: #ecd5b3;
+  --cream: #ebd3b7;
   --white: #FFFFFF;
   --dark-navy: #132A41;
 
   /* shadcn/ui compatibility tokens */
-  --background: #ecd5b3;
+  --background: #ebd3b7;
   --foreground: #1D3D5D;
-  --card: #ecd5b3;
+  --card: #ebd3b7;
   --card-foreground: #1D3D5D;
-  --popover: #ecd5b3;
+  --popover: #ebd3b7;
   --popover-foreground: #1D3D5D;
   --primary: #1D3D5D;
   --primary-foreground: #FFFFFF;
