@@ -41,14 +41,14 @@ export function Header() {
 		>
 			<nav
 				className={cn(
-					'flex h-14 w-full items-center justify-between px-6 md:h-12 md:transition-all md:ease-out',
+					'flex h-16 md:h-12 w-full items-center justify-between px-6 md:transition-all md:ease-out',
 					{
 						'md:px-4': scrolled,
 					},
 				)}
 			>
         <a href="/" className="flex items-center gap-2 group cursor-pointer shrink-0">
-          <img src="/logo.png" alt="Legal Pilot" className="h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105" />
+          <img src="/logo.png" alt="Legal Pilot" className="h-7 md:h-8 w-auto object-contain transition-transform group-hover:scale-105" />
         </a>
 
 				<div className="hidden items-center gap-1 md:flex">

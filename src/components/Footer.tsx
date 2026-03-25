@@ -47,7 +47,7 @@ export const Footer = () => {
           {/* Brand & Social */}
           <div className="flex flex-col gap-6">
             <Link href="/" className="flex items-center gap-2.5 group hover:scale-105 transition-transform duration-300">
-              <img src="/logo.png" alt="Legal Pilot" className="h-14 w-auto object-contain" />
+              <img src="/logo.png" alt="Legal Pilot" className="h-24 w-auto object-contain" />
             </Link>
             <p className="text-sm text-navy/80 font-bold leading-relaxed max-w-xs uppercase tracking-tight">
               Devenez l&apos;entrepreneur que vous avez toujours voulu être. Nous nous occupons de tout l&apos;aspect juridique.
