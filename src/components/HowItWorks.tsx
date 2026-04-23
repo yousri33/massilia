@@ -28,7 +28,7 @@ const steps = [
 
 export const HowItWorks = () => {
   return (
-    <section className="py-16 bg-background relative overflow-hidden">
+    <section id="how-it-works" className="py-16 bg-background relative overflow-hidden">
       {/* Background blobs */}
       <div className="absolute top-0 left-0 w-[550px] h-[550px] bg-coral/5 rounded-full blur-[140px] -ml-64 -mt-32 pointer-events-none" />
       <div className="absolute bottom-1/4 right-0 w-[450px] h-[450px] bg-navy/5 rounded-full blur-[100px] -mr-64 pointer-events-none" />

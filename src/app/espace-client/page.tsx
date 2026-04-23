@@ -1,476 +1,1325 @@
 'use client';
 
 import * as React from 'react';
-import { 
-  LayoutDashboard, 
-  MessageSquare, 
-  FileText, 
-  CreditCard, 
-  Settings, 
-  Search, 
-  Bell, 
-  User, 
-  LogOut, 
-  Send,
-  MoreVertical,
-  Paperclip,
-  CheckCheck
-} from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  LayoutDashboard, MessageSquare, FileText, CreditCard, Settings,
+  Search, Bell, LogOut, Send, Paperclip, CheckCheck, ArrowRight,
+  TrendingUp, TrendingDown, Building2, FileSignature, ShieldCheck,
+  Award, Users, Calculator, AlertTriangle, ChevronRight, Sparkles,
+  Clock, CheckCircle2, Circle, AlertCircle, Download, Trash2,
+  ImageIcon, Plus, Mail, Phone, MapPin, Calendar, Activity,
+  BarChart3, FileCheck, Zap, Star, ExternalLink, Filter, Grid3X3,
+  List, RefreshCcw, Upload,
+} from 'lucide-react';
 
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
+  Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Separator } from '@/components/ui/separator';
 import {
-  SidebarProvider,
-  SidebarInset,
-  SidebarTrigger,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
+  SidebarProvider, SidebarInset, SidebarTrigger, Sidebar, SidebarHeader,
+  SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel,
+  SidebarMenu, SidebarMenuItem, SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator as Sep } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { 
+  Dialog, DialogContent, DialogHeader, 
+  DialogTitle, DialogDescription, DialogFooter 
+} from '@/components/ui/dialog';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import MorphPanel from '@/components/ui/ai-input';
 
-// --- Types & Data ---
+import { AuthGuard } from '@/components/AuthGuard';
+import { FileUpload } from '@/components/FileUpload';
+import { FileList } from '@/components/FileList';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  getDiagnostic,
+} from '@/lib/storage';
+import {
+  getDocuments, getNotifications, markNotificationRead, deleteDocument,
+} from '@/lib/db';
+import { computeComplianceScore, generateRecommendations } from '@/lib/compliance';
+import type { StoredFile, DiagnosticAnswers, Recommendation } from '@/lib/types';
 
+// ─── Types ───────────────────────────────────────────────────────────────────
 type View = 'dashboard' | 'chat' | 'documents' | 'billing' | 'settings';
 
-const DATA = {
-  user: {
-    name: 'Yousri Aberkane',
-    email: 'yousri.a@massilia.dz',
-    avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=200&h=200&auto=format&fit=crop',
-    company: 'Massilia Digital SARL',
-    location: 'Alger, Algérie'
-  },
-  expert: {
-    name: 'Me. Amine Hadjadj',
-    role: 'Avocat à la Cour - Expert en Droit des Sociétés',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&h=200&auto=format&fit=crop',
-    online: true
-  },
-  stats: [
-    { label: 'Dossiers Actifs', value: '4', trend: '+1', color: 'bg-blue-500' },
-    { label: 'Documents Signés', value: '12', trend: '+3', color: 'bg-green-500' },
-    { label: 'Factures en attente', value: '2', trend: '0', color: 'bg-amber-500' },
-    { label: 'Temps de réponse expert', value: '15m', trend: '-2m', color: 'bg-purple-500' },
-  ],
-  recentCases: [
-    { id: '1', title: 'Rédaction Statuts SARL', date: '25 Mars 2024', status: 'En cours', progress: 65 },
-    { id: '2', title: 'Contrat de Distribution Oran', date: '20 Mars 2024', status: 'Terminé', progress: 100 },
-    { id: '3', title: 'Dépôt de Marque INAPI', date: '18 Mars 2024', status: 'Action requise', progress: 30 },
-  ],
-  messages: [
-    { id: '1', sender: 'expert', text: 'Bonjour Yousri, j\'ai bien reçu vos documents pour la modification des statuts.', time: '10:30' },
-    { id: '2', sender: 'user', text: 'Merci Maître. Est-ce que le procès-verbal est conforme à la nouvelle loi de finances ?', time: '10:32' },
-    { id: '3', sender: 'expert', text: 'Absolument. J\'ai intégré les nouvelles dispositions concernant le capital social. Je vous envoie la version finale demain matin.', time: '10:45' },
-  ]
+// ─── Static Demo Data ────────────────────────────────────────────────────────
+const EXPERT = {
+  name: 'Me. Amine Hadjadj',
+  role: 'Avocat — Droit des Sociétés',
+  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&h=200&auto=format&fit=crop',
+  online: true,
+  responseTime: '< 2h',
 };
 
-// --- Components ---
+const DEMO_CASES = [
+  { id: '1', title: 'Rédaction Statuts SARL', type: 'Création', date: '25 Mar 2026', status: 'En cours', progress: 65, priority: 'haute' },
+  { id: '2', title: 'Contrat de Distribution Oran', type: 'Contrat', date: '20 Mar 2026', status: 'Terminé', progress: 100, priority: 'faible' },
+  { id: '3', title: 'Dépôt de Marque INAPI', type: 'PI', date: '18 Mar 2026', status: 'Action requise', progress: 30, priority: 'haute' },
+  { id: '4', title: 'Conformité RGPD/DPO', type: 'Conformité', date: '10 Mar 2026', status: 'En cours', progress: 50, priority: 'moyenne' },
+];
 
-const ChatInterface = () => {
-  const [messages, setMessages] = React.useState(DATA.messages);
+const DEMO_MESSAGES = [
+  { id: '1', sender: 'expert', text: "Bonjour, j'ai bien reçu vos documents pour la modification des statuts. Je les analyse actuellement.", time: '09:30', date: 'Aujourd\'hui' },
+  { id: '2', sender: 'user', text: "Merci Maître. Est-ce que le procès-verbal est conforme à la nouvelle loi de finances ?", time: '09:32', date: 'Aujourd\'hui' },
+  { id: '3', sender: 'expert', text: "Absolument. J'ai intégré les nouvelles dispositions concernant le capital social. Je vous envoie la version finale demain matin.", time: '09:45', date: 'Aujourd\'hui' },
+  { id: '4', sender: 'user', text: "Parfait, merci beaucoup pour la rapidité.", time: '09:47', date: 'Aujourd\'hui' },
+];
+
+const DEMO_INVOICES = [
+  { id: 'INV-001', label: 'Pack Création SARL', date: '01 Avr 2026', amount: '45 000 DA', status: 'Payée' },
+  { id: 'INV-002', label: 'Module DPO — Mensuel', date: '01 Mar 2026', amount: '12 000 DA', status: 'Payée' },
+  { id: 'INV-003', label: 'Consultation Avocat', date: '15 Fév 2026', amount: '8 500 DA', status: 'En attente' },
+];
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  Building2, FileSignature, ShieldCheck, Award, Users, Calculator,
+};
+
+// ─── Animated Counter ────────────────────────────────────────────────────────
+function AnimatedNumber({ value }: { value: number }) {
+  const [display, setDisplay] = React.useState(0);
+  React.useEffect(() => {
+    const step = value / 30;
+    let current = 0;
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= value) { setDisplay(value); clearInterval(timer); }
+      else setDisplay(Math.floor(current));
+    }, 20);
+    return () => clearInterval(timer);
+  }, [value]);
+  return <>{display}</>;
+}
+
+// ─── Compliance Ring ─────────────────────────────────────────────────────────
+function ComplianceRing({ score, size = 'md' }: { score: number; size?: 'sm' | 'md' | 'lg' }) {
+  const dims = { sm: 88, md: 120, lg: 160 };
+  const dim = dims[size];
+  const r = (dim / 2) - 10;
+  const circ = 2 * Math.PI * r;
+  const color = score < 40 ? '#EF6C77' : score < 70 ? '#f59e0b' : '#22c55e';
+  const label = score < 40 ? 'Faible' : score < 70 ? 'Partielle' : 'Bonne';
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: dim, height: dim }}>
+      <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox={`0 0 ${dim} ${dim}`}>
+        <circle cx={dim / 2} cy={dim / 2} r={r} fill="none" stroke="currentColor" className="text-slate-100" strokeWidth="8" />
+        <motion.circle
+          cx={dim / 2} cy={dim / 2} r={r} fill="none" stroke={color} strokeWidth="8"
+          strokeLinecap="round" strokeDasharray={circ}
+          initial={{ strokeDashoffset: circ }}
+          animate={{ strokeDashoffset: circ - (score / 100) * circ }}
+          transition={{ duration: 1.4, ease: 'easeOut' }}
+        />
+      </svg>
+      <div className="flex flex-col items-center">
+        <span className={cn('font-black text-navy tabular-nums', size === 'lg' ? 'text-4xl' : size === 'md' ? 'text-2xl' : 'text-lg')}>
+          <AnimatedNumber value={score} />%
+        </span>
+        <span className="text-[9px] font-black tracking-widest uppercase text-slate-400">{label}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── KPI Card ────────────────────────────────────────────────────────────────
+function KpiCard({
+  label, value, unit = '', trend, trendLabel, icon: Icon, iconBg,
+}: {
+  label: string; value: string | number; unit?: string;
+  trend?: 'up' | 'down' | 'neutral'; trendLabel?: string;
+  icon: React.ElementType; iconBg: string;
+}) {
+  return (
+    <Card className="border-0 shadow-sm bg-white rounded-2xl hover:shadow-md transition-all duration-300 group">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between mb-4">
+          <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', iconBg)}>
+            <Icon className="w-5 h-5 text-white" />
+          </div>
+          {trendLabel && (
+            <div className={cn('flex items-center gap-1 text-xs font-black px-2 py-1 rounded-full', {
+              'bg-green-50 text-green-600': trend === 'up',
+              'bg-red-50 text-red-500': trend === 'down',
+              'bg-slate-50 text-slate-500': trend === 'neutral',
+            })}>
+              {trend === 'up' && <TrendingUp className="w-3 h-3" />}
+              {trend === 'down' && <TrendingDown className="w-3 h-3" />}
+              {trendLabel}
+            </div>
+          )}
+        </div>
+        <p className="text-xs font-black text-slate-400 uppercase tracking-[0.15em] mb-1">{label}</p>
+        <p className="text-2xl font-black text-navy">
+          {value}<span className="text-sm text-slate-400 font-bold ml-1">{unit}</span>
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Status Badge ────────────────────────────────────────────────────────────
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    'Terminé': 'bg-green-50 text-green-700 border-green-200',
+    'En cours': 'bg-blue-50 text-blue-700 border-blue-200',
+    'Action requise': 'bg-coral/10 text-coral border-coral/20',
+    'Payée': 'bg-green-50 text-green-700 border-green-200',
+    'En attente': 'bg-amber-50 text-amber-700 border-amber-200',
+  };
+  const icons: Record<string, React.ElementType> = {
+    'Terminé': CheckCircle2,
+    'En cours': Circle,
+    'Action requise': AlertCircle,
+    'Payée': CheckCircle2,
+    'En attente': Clock,
+  };
+  const Icon = icons[status] ?? Circle;
+  return (
+    <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-black', styles[status] ?? 'bg-slate-50 text-slate-600 border-slate-200')}>
+      <Icon className="w-3 h-3" />
+      {status}
+    </span>
+  );
+}
+
+// ─── Dashboard View ───────────────────────────────────────────────────────────
+function DashboardView({ diagnostic, setActiveView }: { diagnostic: DiagnosticAnswers | null; setActiveView: (v: View) => void }) {
+  const { user } = useAuth();
+  if (!user) return null;
+  const firstName = user.name.split(' ')[0];
+  const score = diagnostic ? computeComplianceScore(diagnostic) : null;
+  const recs: Recommendation[] = diagnostic ? generateRecommendations(user, diagnostic) : [];
+
+  return (
+    <div className="space-y-7">
+      {/* Header greeting */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <motion.h1 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-black text-navy tracking-tight">
+            Bonjour, <span className="text-coral">{firstName}</span> 👋
+          </motion.h1>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="text-slate-500 font-medium mt-1">
+            {new Date().toLocaleDateString('fr-DZ', { weekday: 'long', day: 'numeric', month: 'long' })} · {user.company}
+          </motion.p>
+        </div>
+        {!diagnostic && (
+          <Button asChild className="bg-coral hover:bg-coral/90 text-white font-black rounded-xl gap-2">
+            <Link href="/diagnostic"><Sparkles className="w-4 h-4" />Faire mon diagnostic</Link>
+          </Button>
+        )}
+      </div>
+
+      {/* Onboarding card */}
+      {!diagnostic && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+          <Card className="border-2 border-dashed border-coral/25 bg-gradient-to-br from-coral/5 to-transparent rounded-2xl shadow-none">
+            <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-5">
+              <div className="w-14 h-14 rounded-2xl bg-coral/10 flex items-center justify-center shrink-0">
+                <Sparkles className="w-7 h-7 text-coral" />
+              </div>
+              <div className="flex-1 text-center sm:text-left">
+                <h3 className="font-black text-navy text-lg">Complétez votre diagnostic juridique</h3>
+                <p className="text-slate-500 text-sm mt-1">Obtenez votre score de conformité et des recommandations personnalisées pour {user.company}.</p>
+              </div>
+              <Button asChild className="bg-navy hover:bg-navy/90 text-white font-black rounded-xl px-6 shrink-0">
+                <Link href="/diagnostic">Démarrer <ArrowRight className="w-4 h-4 ml-1" /></Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* KPI Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <KpiCard label="Dossiers Actifs" value="4" trend="up" trendLabel="+1 ce mois" icon={FileText} iconBg="bg-blue-500" />
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <KpiCard label="Documents Signés" value="12" trend="up" trendLabel="+3" icon={FileCheck} iconBg="bg-green-500" />
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+          <KpiCard label="Factures en attente" value="2" trend="neutral" trendLabel="stable" icon={CreditCard} iconBg="bg-amber-500" />
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <KpiCard label="Temps de réponse" value="< 2" unit="heures" trend="up" trendLabel="excellent" icon={Zap} iconBg="bg-purple-500" />
+        </motion.div>
+      </div>
+
+      {/* Main grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Cases table */}
+        <div className="xl:col-span-2 space-y-4">
+          <Card className="border-0 shadow-sm bg-white rounded-2xl overflow-hidden">
+            <CardHeader className="px-6 py-5 border-b border-slate-50 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-black text-navy">Dossiers Récents</CardTitle>
+                <CardDescription className="text-xs mt-0.5">Suivi en temps réel de vos procédures</CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" className="text-xs font-black text-coral hover:text-coral hover:bg-coral/5 rounded-xl gap-1">
+                Tout voir <ChevronRight className="w-3 h-3" />
+              </Button>
+            </CardHeader>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-slate-50 hover:bg-transparent">
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-6">Dossier</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Type</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Progression</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Statut</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 pr-6 hidden lg:table-cell">Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {DEMO_CASES.map((c) => (
+                  <TableRow key={c.id} className="border-slate-50 hover:bg-slate-50/60 transition-colors cursor-pointer">
+                    <TableCell className="pl-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-navy/5 flex items-center justify-center shrink-0">
+                          <FileText className="w-4 h-4 text-navy/40" />
+                        </div>
+                        <span className="font-bold text-navy text-sm">{c.title}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">{c.type}</span>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <div className="flex items-center gap-2 min-w-[100px]">
+                        <Progress value={c.progress} className="h-1.5 flex-1 bg-slate-100" />
+                        <span className="text-xs font-black text-slate-400 w-8 text-right">{c.progress}%</span>
+                      </div>
+                    </TableCell>
+                    <TableCell><StatusBadge status={c.status} /></TableCell>
+                    <TableCell className="pr-6 text-xs text-slate-400 font-medium hidden lg:table-cell">{c.date}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+
+          {/* Recommendations */}
+          {recs.length > 0 && (
+            <Card className="border-0 shadow-sm bg-white rounded-2xl overflow-hidden">
+              <CardHeader className="px-6 py-5 border-b border-slate-50">
+                <CardTitle className="text-base font-black text-navy flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-coral" />
+                  Recommandations IA ({recs.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3">
+                {recs.slice(0, 3).map((rec) => {
+                  const Icon = ICON_MAP[rec.icon] ?? ShieldCheck;
+                  const pStyle = { haute: 'bg-coral/10 text-coral border-coral/20', moyenne: 'bg-amber-50 text-amber-700 border-amber-200', faible: 'bg-green-50 text-green-700 border-green-200' }[rec.priority];
+                  const pLabel = { haute: 'Haute', moyenne: 'Moyenne', faible: 'Faible' }[rec.priority];
+                  return (
+                    <div key={rec.id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors group cursor-pointer">
+                      <div className="w-9 h-9 rounded-xl bg-navy/5 flex items-center justify-center shrink-0">
+                        <Icon className="w-4 h-4 text-navy/50" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-black text-navy text-sm">{rec.title}</span>
+                          <span className={cn('text-[10px] font-black px-2 py-0.5 rounded-full border', pStyle)}>{pLabel}</span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{rec.description}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-coral shrink-0 mt-1 transition-colors" />
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Right column */}
+        <div className="space-y-4">
+          {/* Compliance score */}
+          {score !== null ? (
+            <Card className="border-0 shadow-sm bg-white rounded-2xl overflow-hidden">
+              <CardHeader className="px-6 py-5 border-b border-slate-50">
+                <CardTitle className="text-base font-black text-navy">Score de Conformité</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 flex flex-col items-center gap-4">
+                <ComplianceRing score={score} size="lg" />
+                <p className="text-xs text-center text-slate-500 font-medium max-w-[180px]">
+                  {score < 40 ? 'Des lacunes importantes nécessitent votre attention.' : score < 70 ? 'Bonne base — quelques points à renforcer.' : 'Votre entreprise est bien protégée.'}
+                </p>
+                <Button asChild variant="outline" size="sm" className="w-full rounded-xl border-navy/15 text-navy font-black text-xs">
+                  <Link href="/diagnostic">Refaire le diagnostic</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {/* Expert card */}
+          <Card className="border-0 shadow-sm bg-navy rounded-2xl overflow-hidden relative">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(239,108,119,0.2),transparent_60%)]" />
+            <CardContent className="p-5 relative space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Avatar className="h-12 w-12 ring-2 ring-coral/30">
+                    <AvatarImage src={EXPERT.avatar} />
+                    <AvatarFallback className="bg-slate-700 text-white font-black">AH</AvatarFallback>
+                  </Avatar>
+                  <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-navy" />
+                </div>
+                <div>
+                  <p className="font-black text-white text-sm">{EXPERT.name}</p>
+                  <p className="text-white/50 text-[11px] font-medium">{EXPERT.role}</p>
+                  <p className="text-green-400 text-[10px] font-black flex items-center gap-1 mt-0.5">
+                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />En ligne · répond en {EXPERT.responseTime}
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => setActiveView('chat')}
+                className="w-full bg-coral hover:bg-coral/90 text-white font-black rounded-xl py-2.5 text-sm"
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />Démarrer la conversation
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Quick actions */}
+          <Card className="border-0 shadow-sm bg-white rounded-2xl overflow-hidden">
+            <CardHeader className="px-5 py-4 border-b border-slate-50">
+              <CardTitle className="text-sm font-black text-navy">Actions Rapides</CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 space-y-1">
+              {[
+                { label: 'Uploader un document', icon: Upload, onClick: () => setActiveView('documents') },
+                { label: 'Voir mes factures', icon: CreditCard, onClick: () => setActiveView('billing') },
+                { label: 'Mon diagnostic', icon: Activity, href: '/diagnostic' },
+              ].map((item) => (
+                item.href ? (
+                  <Link key={item.label} href={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors group">
+                    <item.icon className="w-4 h-4 text-slate-400 group-hover:text-navy" />
+                    <span className="text-sm font-bold text-slate-600 group-hover:text-navy">{item.label}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-navy ml-auto" />
+                  </Link>
+                ) : (
+                  <button key={item.label} onClick={item.onClick} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors group">
+                    <item.icon className="w-4 h-4 text-slate-400 group-hover:text-navy" />
+                    <span className="text-sm font-bold text-slate-600 group-hover:text-navy">{item.label}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-navy ml-auto" />
+                  </button>
+                )
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Chat View ────────────────────────────────────────────────────────────────
+function ChatView() {
   const [input, setInput] = React.useState('');
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  
+  const EXPERTS = {
+    amine: EXPERT,
+    sarah: {
+      name: 'Me. Sarah Bensmail',
+      role: 'Conseil Fiscal',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&h=200&auto=format&fit=crop',
+      online: false,
+      responseTime: '< 4h'
+    },
+    karim: {
+      name: 'Me. Karim Zerrouki',
+      role: 'Propriété Intellectuelle',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&h=200&auto=format&fit=crop',
+      online: true,
+      responseTime: '< 1h'
+    },
+    lynda: {
+      name: 'Me. Lynda Belkacem',
+      role: 'Droit du Travail',
+      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&h=200&auto=format&fit=crop',
+      online: true,
+      responseTime: '< 1h30'
+    }
+  };
+
+  const [selectedExpert, setSelectedExpert] = React.useState(EXPERTS.amine);
+  const [isBookingOpen, setIsBookingOpen] = React.useState(false);
+  const [bookingStep, setBookingStep] = React.useState(1);
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d;
+  });
+  const [selectedTime, setSelectedTime] = React.useState<string | null>(null);
+
+  const TIMES = ['09:00', '10:30', '14:00', '15:30', '17:00'];
+
+  const CONVOS = [
+    { 
+      id: '1', 
+      expert: EXPERTS.amine, 
+      lastMsg: 'Je vous envoie la version finale...', 
+      time: '09:45', 
+      unread: 0 
+    },
+    { 
+      id: '2', 
+      expert: EXPERTS.sarah, 
+      lastMsg: 'Votre bilan est prêt.', 
+      time: 'Hier', 
+      unread: 2 
+    },
+    {
+      id: '3',
+      expert: EXPERTS.karim,
+      lastMsg: 'Le dépôt INAPI est validé.',
+      time: '2 j.',
+      unread: 0
+    },
+    {
+      id: '4',
+      expert: EXPERTS.lynda,
+      lastMsg: 'Le contrat est conforme.',
+      time: '1 sem.',
+      unread: 0
+    }
+  ];
+
+  // Map to track messages for each conversation
+  const [chatHistories, setChatHistories] = React.useState<Record<string, any[]>>({
+    '1': DEMO_MESSAGES,
+    '2': [
+      { id: '101', sender: 'expert', text: "Bonjour, j'ai terminé l'analyse de votre dernier bilan fiscal.", time: 'Hier', date: 'Hier' },
+      { id: '102', sender: 'user', text: "Merci Sarah. Est-ce qu'on peut optimiser les charges sociales ?", time: 'Hier', date: 'Hier' },
+    ],
+    '3': [
+      { id: '301', sender: 'expert', text: "J'ai bien reçu votre demande de dépôt de marque. C'est en cours.", time: 'Lundi', date: 'Lundi' },
+    ],
+    '4': [
+      { id: '401', sender: 'expert', text: "Le nouveau contrat de travail pour votre commercial est prêt.", time: '10/04', date: '10/04' },
+    ]
+  });
+
+  const activeConvo = CONVOS.find(c => c.expert.name === selectedExpert.name) || CONVOS[0];
+  const currentMessages = chatHistories[activeConvo.id] || [];
 
   React.useEffect(() => {
     if (scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const el = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (el) el.scrollTop = el.scrollHeight;
     }
-  }, [messages]);
+  }, [currentMessages, selectedExpert]);
 
   const handleSend = () => {
     if (!input.trim()) return;
-    const newMessage = {
-        id: Date.now().toString(),
-        sender: 'user',
-        text: input,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const newMsg = { 
+      id: Date.now().toString(), 
+      sender: 'user', 
+      text: input, 
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
+      date: "Aujourd'hui" 
     };
-    setMessages([...messages, newMessage]);
+    
+    setChatHistories(prev => ({
+      ...prev,
+      [activeConvo.id]: [...(prev[activeConvo.id] || []), newMsg]
+    }));
+    
     setInput('');
     
-    // Fake expert reply
     setTimeout(() => {
-        setMessages(prev => [...prev, {
-            id: (Date.now() + 1).toString(),
-            sender: 'expert',
-            text: "C'est noté, je reviens vers vous rapidement.",
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }]);
+      setChatHistories(prev => ({
+        ...prev,
+        [activeConvo.id]: [
+          ...(prev[activeConvo.id] || []), 
+          { 
+            id: (Date.now() + 1).toString(), 
+            sender: 'expert', 
+            text: `Merci pour votre message concernant ${selectedExpert.name === EXPERT.name ? 'les statuts' : 'la fiscalité'}. Je l'examine immédiatement.`, 
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
+            date: "Aujourd'hui" 
+          }
+        ]
+      }));
     }, 1500);
   };
 
   return (
-    <Card className="flex flex-col h-[calc(100vh-180px)] border-none shadow-2xl bg-white/80 backdrop-blur-md rounded-3xl overflow-hidden ring-1 ring-navy/5">
-      <CardHeader className="flex flex-row items-center justify-between border-b border-navy/5 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
-              <AvatarImage src={DATA.expert.avatar} />
-              <AvatarFallback>AH</AvatarFallback>
-            </Avatar>
-            {DATA.expert.online && (
-              <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white" />
-            )}
-          </div>
-          <div>
-            <CardTitle className="text-sm font-bold">{DATA.expert.name}</CardTitle>
-            <CardDescription className="text-xs">{DATA.expert.role}</CardDescription>
-          </div>
+    <div className="flex h-[calc(100vh-130px)] bg-white rounded-2xl border-0 shadow-sm overflow-hidden border-2 border-white">
+      {/* Convos Sidebar */}
+      <div className="w-80 border-r border-slate-100 hidden md:flex flex-col bg-slate-50/30">
+        <div className="p-4 border-b border-slate-100 bg-white">
+          <h3 className="font-black text-navy text-sm">Mes Conversations</h3>
         </div>
-        <div className="flex items-center gap-2">
-           <Button variant="ghost" size="icon" className="rounded-full"><Search className="h-4 w-4" /></Button>
-           <Button variant="ghost" size="icon" className="rounded-full"><MoreVertical className="h-4 w-4" /></Button>
-        </div>
-      </CardHeader>
-      
-      <div 
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-slate-200"
-      >
-        <div className="text-center py-4 text-xs font-black uppercase tracking-widest text-slate-400">
-            Aujourd'hui
-        </div>
-        
-        {messages.map((m) => (
-          <div key={m.id} className={cn("flex", m.sender === 'user' ? "justify-end" : "justify-start")}>
-            <div className={cn(
-               "max-w-[75%] px-4 py-3 rounded-2xl shadow-sm text-sm",
-               m.sender === 'user' 
-                ? "bg-navy text-white rounded-br-none" 
-                : "bg-white text-slate-700 rounded-bl-none border border-slate-100"
-            )}>
-              <p className="leading-relaxed">{m.text}</p>
-              <div className={cn("flex items-center gap-1 mt-1 justify-end", m.sender === 'user' ? "text-white/50" : "text-slate-400")}>
-                <span className="text-[10px]">{m.time}</span>
-                {m.sender === 'user' && <CheckCheck className="h-3 w-3" />}
-              </div>
-            </div>
+        <ScrollArea className="flex-1">
+          <div className="p-2 space-y-1">
+            {CONVOS.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setSelectedExpert(c.expert)}
+                className={cn(
+                  "w-full flex items-center gap-3 p-3 rounded-xl transition-all",
+                  selectedExpert.name === c.expert.name ? "bg-white shadow-sm ring-1 ring-slate-100" : "hover:bg-white/50"
+                )}
+              >
+                <div className="relative">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={c.expert.avatar} />
+                    <AvatarFallback>{c.expert.name[0]}</AvatarFallback>
+                  </Avatar>
+                  {c.expert.online && <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />}
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="flex items-center justify-between">
+                    <p className="font-black text-navy text-xs truncate">{c.expert.name}</p>
+                    <span className="text-[10px] text-slate-400 font-bold">{c.time}</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">{c.lastMsg}</p>
+                </div>
+                {c.unread > 0 && (
+                  <span className="w-4 h-4 bg-coral text-white text-[9px] font-black rounded-full flex items-center justify-center">
+                    {c.unread}
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
-        ))}
-      </div>
-
-      <div className="p-4 bg-white/50 backdrop-blur-lg border-t border-navy/5 shadow-[0_-10px_40px_rgba(0,0,0,0.03)]">
-        <div className="flex items-center gap-3 bg-slate-50 rounded-2xl border p-2 focus-within:ring-2 ring-navy/5 transition-all">
-          <Button variant="ghost" size="icon" className="shrink-0 rounded-full text-slate-400 hover:text-navy"><Paperclip className="h-5 w-5" /></Button>
-          <Input 
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Écrivez votre message..." 
-            className="border-none bg-transparent focus-visible:ring-0 px-0 h-10"
-          />
-          <Button 
-            onClick={handleSend}
-            disabled={!input.trim()}
-            className="shrink-0 rounded-xl bg-navy hover:bg-navy/90 text-white shadow-md active:scale-95 transition-transform"
-          >
-            <Send className="h-4 w-4 mr-2" />
-            Envoyer
+        </ScrollArea>
+        <div className="p-4 border-t border-slate-100 bg-white">
+          <Button variant="outline" className="w-full rounded-xl border-slate-200 text-[10px] font-black uppercase tracking-widest h-9">
+            Nouveau message
           </Button>
         </div>
       </div>
-    </Card>
-  );
-};
 
-const DashboardView = () => {
-  return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="flex flex-col gap-2">
-            <h1 className="text-4xl font-black text-navy tracking-tighter drop-shadow-sm">Bonjour, <span className="text-coral">{DATA.user.name.split(' ')[0]}</span> 👋</h1>
-            <p className="text-slate-500 font-medium text-lg">Voici le point sur vos dossiers juridiques pour <span className="font-bold text-navy">{DATA.user.company}</span>.</p>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {DATA.stats.map((stat, i) => (
-                <Card key={i} className="border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white/90 backdrop-blur-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 rounded-3xl">
-                    <CardContent className="p-6">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className={cn("p-2 rounded-xl text-white", stat.color)}>
-                                <LayoutDashboard className="h-5 w-5" />
-                            </div>
-                            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-100 font-black">+12%</Badge>
-                        </div>
-                        <p className="text-sm font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
-                        <h3 className="text-2xl font-black text-navy mt-1">{stat.value}</h3>
-                    </CardContent>
-                </Card>
-            ))}
-        </div>
-
-        {/* Two Columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-                <Card className="border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white/90 backdrop-blur-md overflow-hidden rounded-3xl">
-                    <CardHeader className="border-b bg-slate-50/50">
-                        <CardTitle className="text-lg font-black text-navy">Dossiers Récents</CardTitle>
-                        <CardDescription>Suivi de vos procédures en cours</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <div className="divide-y divide-slate-100">
-                            {DATA.recentCases.map((item) => (
-                                <div key={item.id} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-3 bg-navy/5 rounded-2xl text-navy">
-                                            <FileText className="h-6 w-6" />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-navy">{item.title}</p>
-                                            <p className="text-xs text-slate-400 font-medium">{item.date} • {DATA.user.location}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-6">
-                                        <div className="hidden md:block w-32">
-                                            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                                <div 
-                                                    className="h-full bg-coral transition-all duration-1000" 
-                                                    style={{ width: `${item.progress}%` }} 
-                                                />
-                                            </div>
-                                            <p className="text-[10px] text-right mt-1 font-black text-coral">{item.progress}%</p>
-                                        </div>
-                                        <Badge 
-                                            className={cn(
-                                                "font-black uppercase text-[10px] tracking-widest",
-                                                item.status === 'Terminé' ? "bg-green-500" : "bg-navy"
-                                            )}
-                                        >
-                                            {item.status}
-                                        </Badge>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col bg-white">
+        {/* Chat header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white/50 backdrop-blur-md shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={selectedExpert.avatar} />
+                <AvatarFallback>{selectedExpert.name[0]}</AvatarFallback>
+              </Avatar>
+              {selectedExpert.online && <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />}
             </div>
+            <div>
+              <p className="font-black text-navy text-sm">{selectedExpert.name}</p>
+              <p className="text-[10px] font-bold text-slate-500">{selectedExpert.role}</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Button 
+              className="bg-navy hover:bg-navy/90 text-white font-black text-[10px] uppercase tracking-widest px-4 h-9 rounded-xl shadow-lg shadow-navy/10"
+              onClick={() => {
+                setBookingStep(1);
+                setIsBookingOpen(true);
+              }}
+            >
+              <Calendar className="w-3.5 h-3.5 mr-2 text-coral" />
+              Prendre RDV
+            </Button>
+            <Separator orientation="vertical" className="h-6 bg-slate-100" />
+            <Button variant="ghost" size="icon" className="rounded-xl h-9 w-9 text-slate-400 hover:text-navy">
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
 
-            <div className="space-y-6">
-                <Card className="border-none shadow-[0_8px_30px_rgb(0,0,0,0.12)] bg-gradient-to-br from-navy via-navy to-slate-900 text-white overflow-hidden rounded-3xl relative">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-coral/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-lg font-black italic">Besoin d'aide ?</CardTitle>
-                        <CardDescription className="text-white/60">Contactez directement votre expert juridique dédié.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6 space-y-6">
-                        <div className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/10">
-                            <Avatar className="h-12 w-12 ring-2 ring-coral/20">
-                                <AvatarImage src={DATA.expert.avatar} />
-                                <AvatarFallback>AH</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-bold">{DATA.expert.name}</p>
-                                <p className="text-xs text-white/50 font-medium">Expert Sénior</p>
-                            </div>
-                        </div>
-                        <Button className="relative group w-full bg-coral hover:bg-coral/90 text-white font-black py-7 rounded-2xl shadow-[0_0_40px_rgba(255,107,107,0.3)] hover:shadow-[0_0_60px_rgba(255,107,107,0.4)] transition-all active:scale-[0.98] overflow-hidden">
-                            <span className="relative z-10 text-base tracking-wide">Démarrer le chat</span>
-                            <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
-                        </Button>
-                    </CardContent>
-                </Card>
+        {/* Booking Modal */}
+        <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+          <DialogContent className="sm:max-w-[480px] p-0 border-0 overflow-hidden rounded-3xl bg-white shadow-2xl">
+            <AnimatePresence mode="wait">
+              {bookingStep === 1 && (
+                <motion.div 
+                  key="step1"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="flex flex-col h-full"
+                >
+                  <div className="p-6 border-b border-slate-100 bg-white">
+                    <div className="flex items-center gap-4 mb-2">
+                      <div className="w-12 h-12 rounded-2xl bg-coral/10 flex items-center justify-center shrink-0">
+                        <Calendar className="w-6 h-6 text-coral" />
+                      </div>
+                      <div>
+                        <DialogTitle className="text-xl font-black text-navy">Planifier un rendez-vous</DialogTitle>
+                        <DialogDescription className="font-medium text-slate-500 text-xs mt-1">
+                          Choisissez une date et un créneau pour votre consultation avec {selectedExpert.name}.
+                        </DialogDescription>
+                      </div>
+                    </div>
+                  </div>
 
-                <Card className="border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white/90 backdrop-blur-md rounded-3xl">
-                    <CardHeader>
-                        <CardTitle className="text-lg font-black text-navy">Notifications</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6 pt-0 space-y-4">
-                        {[1, 2].map((i) => (
-                           <div key={i} className="flex gap-4 items-start p-3 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer group">
-                              <div className="h-2 w-2 rounded-full bg-coral mt-2 shrink-0 group-hover:scale-125 transition-transform" />
-                              <div>
-                                 <p className="text-sm font-bold text-navy">Votre contrat a été validé</p>
-                                 <p className="text-xs text-slate-400">Il y a 2 heures</p>
-                              </div>
-                           </div>
+                  <div className="p-6 space-y-8 bg-white/50 relative">
+                    <div className="flex justify-center bg-white/40 backdrop-blur-md border border-white/60 shadow-sm rounded-3xl p-4 relative z-10">
+                      <CalendarComponent 
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        className="border-0 p-0"
+                        disabled={{ before: new Date() }}
+                      />
+                    </div>
+                    
+                    <div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="h-px bg-slate-200 flex-1" />
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Créneaux disponibles</label>
+                        <div className="h-px bg-slate-200 flex-1" />
+                      </div>
+                      <div className="grid grid-cols-5 gap-2.5">
+                        {TIMES.map(t => (
+                          <button
+                            key={t}
+                            onClick={() => setSelectedTime(t)}
+                            className={cn(
+                              "py-2.5 rounded-full text-xs font-black transition-all border shadow-sm",
+                              selectedTime === t 
+                                ? "bg-navy text-white border-navy ring-4 ring-navy/10" 
+                                : "bg-white text-navy border-slate-200 hover:border-navy/30 hover:bg-slate-50"
+                            )}
+                          >
+                            {t}
+                          </button>
                         ))}
-                    </CardContent>
-                </Card>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-5 border-t border-slate-100 bg-white flex justify-between items-center rounded-b-3xl">
+                    <Button variant="ghost" onClick={() => setIsBookingOpen(false)} className="rounded-xl font-bold text-slate-400 hover:text-navy hover:bg-slate-50">
+                      Annuler
+                    </Button>
+                    <Button 
+                      disabled={!selectedDate || !selectedTime}
+                      onClick={() => setBookingStep(2)}
+                      className="bg-navy hover:bg-navy/90 text-white font-black rounded-xl px-8 shadow-lg shadow-navy/20 transition-all disabled:shadow-none"
+                    >
+                      Suivant <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+
+              {bookingStep === 2 && (
+                <motion.div 
+                  key="step2"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="p-6"
+                >
+                  <DialogHeader className="mb-6">
+                    <DialogTitle className="text-xl font-black text-navy">Détails de la consultation</DialogTitle>
+                    <DialogDescription className="font-medium text-slate-500">
+                      Précisez l&apos;objet de votre appel pour que {selectedExpert.name} puisse se préparer.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-5">
+                    <div className="p-4 bg-slate-50 rounded-2xl flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                        <Clock className="w-5 h-5 text-navy/40" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-navy">{selectedDate?.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                        <p className="text-[10px] font-bold text-slate-500">à {selectedTime}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sujet de discussion</label>
+                      <Input placeholder="Ex: Revue de pacte d'associés" className="h-12 rounded-xl border-slate-200 font-medium" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Notes additionnelles</label>
+                      <textarea 
+                        className="w-full min-h-[100px] p-4 rounded-2xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-navy/5 outline-none resize-none"
+                        placeholder="Quels points spécifiques souhaitez-vous aborder ?"
+                      />
+                    </div>
+                  </div>
+
+                  <DialogFooter className="mt-8 flex gap-3 sm:justify-end">
+                    <Button variant="ghost" onClick={() => setBookingStep(1)} className="rounded-xl font-bold text-slate-400">
+                      Retour
+                    </Button>
+                    <Button 
+                      onClick={() => setBookingStep(3)}
+                      className="bg-coral hover:bg-coral/90 text-white font-black rounded-xl px-8"
+                    >
+                      Confirmer le RDV
+                    </Button>
+                  </DialogFooter>
+                </motion.div>
+              )}
+
+              {bookingStep === 3 && (
+                <motion.div 
+                  key="step3"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-8 text-center"
+                >
+                  <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-6 relative">
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                      className="w-full h-full rounded-full bg-green-500 flex items-center justify-center"
+                    >
+                      <CheckCircle2 className="w-10 h-10 text-white" />
+                    </motion.div>
+                    <motion.div 
+                      animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0, 0.3] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="absolute inset-0 rounded-full bg-green-500 -z-10"
+                    />
+                  </div>
+
+                  <h3 className="text-2xl font-black text-navy mb-2">C&apos;est confirmé !</h3>
+                  <p className="text-slate-500 font-medium mb-8">
+                    Votre rendez-vous avec {selectedExpert.name} est enregistré pour le <span className="text-navy font-bold">{selectedDate?.toLocaleDateString('fr-FR')}</span> à <span className="text-navy font-bold">{selectedTime}</span>.
+                  </p>
+
+                  <div className="bg-slate-50 p-4 rounded-2xl mb-8 flex items-center gap-3 text-left">
+                    <Zap className="w-5 h-5 text-amber-500 shrink-0" />
+                    <p className="text-xs font-bold text-slate-600">
+                      Un lien de visioconférence vous a été envoyé par email ainsi qu&apos;une invitation calendrier.
+                    </p>
+                  </div>
+
+                  <Button 
+                    onClick={() => setIsBookingOpen(false)}
+                    className="w-full bg-navy text-white font-black rounded-xl py-6"
+                  >
+                    Fermer
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </DialogContent>
+        </Dialog>
+
+        {/* Messages */}
+        <ScrollArea ref={scrollRef} className="flex-1 px-6 py-6 bg-slate-50/30">
+          <div className="space-y-6">
+            <div className="flex items-center gap-4 my-4">
+              <div className="flex-1 h-px bg-slate-100" />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Discussion active</span>
+              <div className="flex-1 h-px bg-slate-100" />
             </div>
+            {currentMessages.map((m, i) => (
+              <motion.div
+                key={m.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className={cn('flex gap-3', m.sender === 'user' ? 'justify-end' : 'justify-start')}
+              >
+                {m.sender === 'expert' && (
+                  <Avatar className="h-8 w-8 shrink-0 mt-1 border border-slate-100">
+                    <AvatarImage src={selectedExpert.avatar} />
+                    <AvatarFallback>{selectedExpert.name[0]}</AvatarFallback>
+                  </Avatar>
+                )}
+                <div className={cn('max-w-[75%]', m.sender === 'user' ? 'items-end' : 'items-start', 'flex flex-col gap-1.5')}>
+                  <div className={cn(
+                    'px-5 py-3 rounded-2xl text-sm leading-relaxed font-medium shadow-sm',
+                    m.sender === 'user'
+                      ? 'bg-navy text-white rounded-tr-sm'
+                      : 'bg-white text-slate-800 rounded-tl-sm border border-slate-100',
+                  )}>
+                    {m.text}
+                  </div>
+                  <div className={cn('flex items-center gap-1.5 px-1', m.sender === 'user' ? 'justify-end' : 'justify-start')}>
+                    <span className="text-[10px] text-slate-400 font-bold">{m.time}</span>
+                    {m.sender === 'user' && <CheckCheck className="w-3.5 h-3.5 text-blue-500" />}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </ScrollArea>
+
+        {/* Input area */}
+        <div className="px-6 py-4 border-t border-slate-100 bg-white shrink-0">
+          <div className="flex items-center gap-3 bg-slate-50 rounded-2xl border border-slate-200 px-4 py-2.5 focus-within:border-navy/30 focus-within:bg-white focus-within:shadow-lg focus-within:shadow-navy/5 transition-all">
+            <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 rounded-xl text-slate-400 hover:text-navy hover:bg-white shadow-sm">
+              <Paperclip className="h-4.5 w-4.5" />
+            </Button>
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+              placeholder={`Message à ${selectedExpert.name.split(' ')[1]}...`}
+              className="border-none bg-transparent focus-visible:ring-0 h-10 text-sm font-medium"
+            />
+            <Button
+              onClick={handleSend}
+              disabled={!input.trim()}
+              className="h-10 px-5 shrink-0 bg-navy hover:bg-navy/90 text-white rounded-xl font-black text-xs uppercase tracking-widest disabled:opacity-40 shadow-md shadow-navy/10"
+            >
+              Envoyer <Send className="h-3.5 w-3.5 ml-2" />
+            </Button>
+          </div>
         </div>
+      </div>
     </div>
   );
-};
+}
 
-// --- Page Main ---
+// ─── Documents View ───────────────────────────────────────────────────────────
+function DocumentsView({ userId }: { userId: string }) {
+  const [files, setFilesState] = React.useState<(StoredFile & { filePath?: string })[]>([]);
+  const [view, setView] = React.useState<'list' | 'grid'>('list');
+  const [isLoading, setIsLoading] = React.useState(true);
 
-export default function EspaceClientPage() {
+  React.useEffect(() => {
+    const loadFiles = async () => {
+      setIsLoading(true);
+      const docs = await getDocuments(userId);
+      setFilesState(docs as any);
+      setIsLoading(false);
+    };
+    loadFiles();
+  }, [userId]);
+
+  const handleUploadComplete = (file: StoredFile) => setFilesState((prev) => [...prev, file as any]);
+  const handleDelete = (fileId: string) => {
+    const updated = files.filter((f) => f.id !== fileId);
+    setFilesState(updated);
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-2xl font-black text-navy tracking-tight">Mon Legal Drive</h2>
+          <p className="text-slate-500 text-sm mt-0.5">Gérez vos documents juridiques en toute sécurité.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" onClick={() => setView(view === 'list' ? 'grid' : 'list')} className="rounded-xl border-slate-200 h-9 w-9">
+                  {view === 'list' ? <Grid3X3 className="h-4 w-4" /> : <List className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Changer de vue</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </div>
+
+      {/* Storage info */}
+      {isLoading && (
+        <Card className="border-0 shadow-sm bg-white rounded-2xl">
+          <CardContent className="p-4">
+            <Skeleton className="h-4 w-full" />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Upload zone */}
+      <Card className="border-0 shadow-sm bg-white rounded-2xl">
+        <CardContent className="p-5">
+          <FileUpload userId={userId} onUploadComplete={handleUploadComplete} />
+        </CardContent>
+      </Card>
+
+      {/* File list */}
+      <Card className="border-0 shadow-sm bg-white rounded-2xl overflow-hidden">
+        <CardHeader className="px-5 py-4 border-b border-slate-50 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm font-black text-navy">Documents ({files.length})</CardTitle>
+          <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-navy rounded-xl gap-1">
+            <Filter className="w-3.5 h-3.5" />Filtrer
+          </Button>
+        </CardHeader>
+        <CardContent className="p-4">
+          <FileList files={files} userId={userId} onDelete={handleDelete} />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Billing View ─────────────────────────────────────────────────────────────
+function BillingView() {
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-2xl font-black text-navy tracking-tight">Facturation</h2>
+        <p className="text-slate-500 text-sm mt-0.5">Gérez votre abonnement et vos factures.</p>
+      </div>
+
+      {/* Current plan */}
+      <Card className="border-0 shadow-sm bg-navy rounded-2xl overflow-hidden relative">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_50%,rgba(239,108,119,0.2),transparent_60%)]" />
+        <CardContent className="p-6 relative">
+          <div className="flex items-start justify-between flex-wrap gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Star className="w-4 h-4 text-coral" />
+                <span className="text-coral text-xs font-black uppercase tracking-widest">Abonnement actif</span>
+              </div>
+              <h3 className="text-2xl font-black text-white">Pack Essentiel</h3>
+              <p className="text-white/60 text-sm mt-1">Création, contrats, DPO mensuel inclus</p>
+              <div className="flex items-baseline gap-1 mt-3">
+                <span className="text-3xl font-black text-white">57 000</span>
+                <span className="text-white/50 font-bold">DA / mois</span>
+              </div>
+            </div>
+            <Button className="bg-white/10 hover:bg-white/20 text-white font-black rounded-xl border border-white/20 text-sm">
+              Gérer l&apos;abonnement
+            </Button>
+          </div>
+          <div className="mt-5 pt-5 border-t border-white/10 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-white/40" />
+            <span className="text-white/40 text-xs font-bold">Renouvellement le 1er Mai 2026</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Invoices */}
+      <Card className="border-0 shadow-sm bg-white rounded-2xl overflow-hidden">
+        <CardHeader className="px-6 py-5 border-b border-slate-50">
+          <CardTitle className="text-base font-black text-navy">Historique des factures</CardTitle>
+        </CardHeader>
+        <Table>
+          <TableHeader>
+            <TableRow className="border-slate-50 hover:bg-transparent">
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-6">Facture</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Date</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Montant</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Statut</TableHead>
+              <TableHead className="pr-6" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {DEMO_INVOICES.map((inv) => (
+              <TableRow key={inv.id} className="border-slate-50 hover:bg-slate-50/60 transition-colors">
+                <TableCell className="pl-6 py-4">
+                  <div>
+                    <p className="font-bold text-navy text-sm">{inv.label}</p>
+                    <p className="text-xs text-slate-400">{inv.id}</p>
+                  </div>
+                </TableCell>
+                <TableCell className="text-sm text-slate-500">{inv.date}</TableCell>
+                <TableCell className="font-black text-navy text-sm">{inv.amount}</TableCell>
+                <TableCell><StatusBadge status={inv.status} /></TableCell>
+                <TableCell className="pr-6">
+                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-navy rounded-xl gap-1.5">
+                    <Download className="w-3.5 h-3.5" />PDF
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Settings View ────────────────────────────────────────────────────────────
+function SettingsView() {
+  const { user, updateUser } = useAuth();
+  const [form, setForm] = React.useState({ name: user?.name ?? '', company: user?.company ?? '', city: user?.city ?? '' });
+  const [saved, setSaved] = React.useState(false);
+  if (!user) return null;
+  const initials = user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+
+  const handleSave = () => {
+    updateUser({ name: form.name, company: form.company, city: form.city });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div className="space-y-5 max-w-2xl">
+      <div>
+        <h2 className="text-2xl font-black text-navy tracking-tight">Paramètres</h2>
+        <p className="text-slate-500 text-sm mt-0.5">Gérez votre profil et vos préférences.</p>
+      </div>
+
+      {/* Profile card */}
+      <Card className="border-0 shadow-sm bg-white rounded-2xl">
+        <CardHeader className="px-6 py-5 border-b border-slate-50">
+          <CardTitle className="text-base font-black text-navy">Informations personnelles</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-5">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16">
+              <AvatarFallback className="bg-navy text-white font-black text-xl">{initials}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-black text-navy">{user.name}</p>
+              <p className="text-sm text-slate-500">{user.email}</p>
+              <p className="text-xs text-slate-400 mt-1">Membre depuis {new Date(user.createdAt).toLocaleDateString('fr-DZ', { month: 'long', year: 'numeric' })}</p>
+            </div>
+          </div>
+          <Sep />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-navy uppercase tracking-wider">Nom complet</label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="h-10 rounded-xl border-slate-200 text-sm focus-visible:ring-navy/20" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-navy uppercase tracking-wider">Email</label>
+              <Input value={user.email} disabled className="h-10 rounded-xl border-slate-200 text-sm opacity-60" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-navy uppercase tracking-wider">Entreprise</label>
+              <Input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })}
+                className="h-10 rounded-xl border-slate-200 text-sm focus-visible:ring-navy/20" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-navy uppercase tracking-wider">Ville</label>
+              <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
+                className="h-10 rounded-xl border-slate-200 text-sm focus-visible:ring-navy/20" />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={handleSave} className={cn('font-black rounded-xl px-6 text-sm transition-all', saved ? 'bg-green-500 hover:bg-green-500' : 'bg-navy hover:bg-navy/90')}>
+              {saved ? '✓ Enregistré !' : 'Enregistrer les modifications'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Business info */}
+      <Card className="border-0 shadow-sm bg-white rounded-2xl">
+        <CardHeader className="px-6 py-5 border-b border-slate-50">
+          <CardTitle className="text-base font-black text-navy">Informations entreprise</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            {[
+              { icon: Building2, label: 'Forme juridique', value: user.businessType },
+              { icon: MapPin, label: 'Ville', value: user.city || '—' },
+              { icon: Mail, label: 'Email', value: user.email },
+              { icon: Calendar, label: 'Inscription', value: new Date(user.createdAt).toLocaleDateString('fr-DZ') },
+            ].map((item) => (
+              <div key={item.label} className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-navy/5 flex items-center justify-center shrink-0 mt-0.5">
+                  <item.icon className="w-4 h-4 text-navy/40" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{item.label}</p>
+                  <p className="font-bold text-navy mt-0.5">{item.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Danger zone */}
+      <Card className="border border-coral/20 bg-coral/5 rounded-2xl shadow-none">
+        <CardContent className="p-5 flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p className="font-black text-coral text-sm">Zone de danger</p>
+            <p className="text-slate-500 text-xs mt-0.5">La suppression de votre compte est irréversible.</p>
+          </div>
+          <Button variant="outline" className="border-coral/30 text-coral hover:bg-coral hover:text-white font-black rounded-xl text-xs">
+            Supprimer mon compte
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Page Shell ────────────────────────────────────────────────────────────────
+function EspaceClientContent() {
+  const { user, logout } = useAuth();
   const [activeView, setActiveView] = React.useState<View>('dashboard');
+  const [diagnostic, setDiagnosticState] = React.useState<DiagnosticAnswers | null>(null);
+
+  React.useEffect(() => {
+    const d = getDiagnostic();
+    setDiagnosticState(d ?? user?.onboardingAnswers ?? null);
+  }, [user]);
+
+  if (!user) return null;
+  const initials = user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+
+  const NAV_ITEMS: { view: View; label: string; icon: React.ElementType; badge?: string }[] = [
+    { view: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+    { view: 'chat', label: 'Messages', icon: MessageSquare, badge: '2' },
+    { view: 'documents', label: 'Documents', icon: FileText },
+    { view: 'billing', label: 'Facturation', icon: CreditCard },
+    { view: 'settings', label: 'Paramètres', icon: Settings },
+  ];
+
+  const breadcrumbs: Record<View, string> = {
+    dashboard: 'Tableau de bord', chat: 'Messages', documents: 'Documents',
+    billing: 'Facturation', settings: 'Paramètres',
+  };
 
   return (
     <SidebarProvider>
-      <Sidebar variant="sidebar" collapsible="icon" className="border-r border-slate-100">
-        <SidebarHeader className="h-20 flex justify-center px-4">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 bg-navy rounded-xl flex items-center justify-center text-white p-1 shadow-lg">
-                <LayoutDashboard className="h-5 w-5" />
-            </div>
-            <span className="font-black text-navy tracking-tight text-xl group-data-[collapsible=icon]:hidden">
-                LEGAL <span className="text-coral">PILOT</span>
+      <Sidebar variant="sidebar" collapsible="icon" className="border-r border-slate-100 bg-white">
+        {/* Sidebar header */}
+        <SidebarHeader className="h-[60px] flex items-center px-4 border-b border-slate-100">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Image src="/logo.png" alt="Logo" width={28} height={28} className="rounded-lg shrink-0" />
+            <span className="font-black text-navy tracking-tight text-base group-data-[collapsible=icon]:hidden truncate">
+              Legal <span className="text-coral">Pilot</span>
             </span>
           </div>
         </SidebarHeader>
 
-        <SidebarContent className="px-2">
+        {/* Sidebar content */}
+        <SidebarContent className="px-2 py-3">
           <SidebarGroup>
-            <SidebarGroupLabel className="text-slate-400 uppercase tracking-[0.2em] font-black text-[10px] px-4 py-4">Menu Principal</SidebarGroupLabel>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                   isActive={activeView === 'dashboard'} 
-                   onClick={() => setActiveView('dashboard')}
-                   className={cn("h-11 rounded-xl font-bold transition-all", activeView === 'dashboard' ? "bg-navy text-white shadow-md shadow-navy/20" : "text-slate-500 hover:bg-slate-100")}
-                >
-                  <LayoutDashboard className="h-5 w-5" />
-                  <span>Tableau de Bord</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                   isActive={activeView === 'chat'} 
-                   onClick={() => setActiveView('chat')}
-                   className={cn("h-11 rounded-xl font-bold transition-all", activeView === 'chat' ? "bg-navy text-white shadow-md shadow-navy/20" : "text-slate-500 hover:bg-slate-100")}
-                >
-                  <MessageSquare className="h-5 w-5" />
-                  <span>Chat avec Expert</span>
-                  <Badge className="ml-auto bg-coral text-white border-none text-[10px] h-5 w-5 flex items-center justify-center p-0 rounded-full font-black">2</Badge>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                   isActive={activeView === 'documents'} 
-                   onClick={() => setActiveView('documents')}
-                   className={cn("h-11 rounded-xl font-bold transition-all", activeView === 'documents' ? "bg-navy text-white shadow-md shadow-navy/20" : "text-slate-500 hover:bg-slate-100")}
-                >
-                  <FileText className="h-5 w-5" />
-                  <span>Mes Documents</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
-
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-slate-400 uppercase tracking-[0.2em] font-black text-[10px] px-4 py-4">Gestion</SidebarGroupLabel>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                   isActive={activeView === 'billing'} 
-                   onClick={() => setActiveView('billing')}
-                   className="h-11 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all"
-                >
-                  <CreditCard className="h-5 w-5" />
-                  <span>Factures</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                   isActive={activeView === 'settings'} 
-                   onClick={() => setActiveView('settings')}
-                   className="h-11 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all"
-                >
-                  <Settings className="h-5 w-5" />
-                  <span>Configuration</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+            <SidebarMenu className="gap-0.5">
+              {NAV_ITEMS.map(({ view, label, icon: Icon, badge }) => (
+                <SidebarMenuItem key={view}>
+                  <SidebarMenuButton
+                    isActive={activeView === view}
+                    onClick={() => setActiveView(view)}
+                    className={cn(
+                      'h-10 rounded-xl font-bold text-sm transition-all relative',
+                      activeView === view
+                        ? 'bg-navy text-white shadow-sm'
+                        : 'text-slate-500 hover:bg-slate-100 hover:text-navy',
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="group-data-[collapsible=icon]:hidden">{label}</span>
+                    {badge && (
+                      <span className="ml-auto group-data-[collapsible=icon]:hidden text-[10px] font-black bg-coral text-white rounded-full w-4 h-4 flex items-center justify-center shrink-0">
+                        {badge}
+                      </span>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className="p-4">
-          <div className="bg-slate-50 rounded-2xl p-3 flex items-center gap-3 border border-slate-100 overflow-hidden">
-            <Avatar className="h-10 w-10 ring-2 ring-white">
-                <AvatarImage src={DATA.user.avatar} />
-                <AvatarFallback>YA</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                <p className="text-sm font-black text-navy truncate">{DATA.user.name}</p>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight truncate">{DATA.user.company}</p>
-            </div>
-            <Button variant="ghost" size="icon" className="shrink-0 text-slate-400 group-data-[collapsible=icon]:hidden"><LogOut className="h-4 w-4" /></Button>
-          </div>
+        {/* Sidebar footer */}
+        <SidebarFooter className="p-3 border-t border-slate-100">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="w-full flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 transition-colors group">
+                <Avatar className="h-8 w-8 shrink-0">
+                  <AvatarFallback className="bg-navy text-white text-xs font-black">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0 text-left group-data-[collapsible=icon]:hidden">
+                  <p className="text-xs font-black text-navy truncate">{user.name}</p>
+                  <p className="text-[10px] text-slate-400 truncate">{user.company}</p>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" align="start" className="w-52 rounded-xl">
+              <DropdownMenuItem onClick={() => setActiveView('settings')} className="rounded-lg font-medium">
+                <Settings className="w-4 h-4 mr-2" />Paramètres
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout} className="rounded-lg font-medium text-coral focus:text-coral">
+                <LogOut className="w-4 h-4 mr-2" />Se déconnecter
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </SidebarFooter>
       </Sidebar>
 
-      <SidebarInset className="bg-slate-50/10 transition-colors">
-        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-2 px-6 bg-white/40 backdrop-blur-md border-b">
-          <div className="flex items-center gap-4">
-            <SidebarTrigger />
-            <Separator orientation="vertical" className="h-4" />
+      {/* Main content */}
+      <SidebarInset className="bg-slate-50 min-h-screen">
+        {/* Top bar */}
+        <header className="sticky top-0 z-30 flex h-[60px] items-center justify-between px-5 bg-white/80 backdrop-blur-sm border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <SidebarTrigger className="text-slate-500 hover:text-navy" />
+            <Sep orientation="vertical" className="h-4 bg-slate-200" />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="#" className="font-bold text-slate-400">Tableau de Bord</BreadcrumbLink>
+                  <BreadcrumbList className="text-xs font-bold text-slate-400">Espace Client</BreadcrumbList>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="font-black text-navy">
-                    {activeView === 'dashboard' ? 'Général' : activeView === 'chat' ? 'Conversation Expert' : 'Documents'}
-                  </BreadcrumbPage>
+                  <BreadcrumbPage className="text-xs font-black text-navy">{breadcrumbs[activeView]}</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-
-          <div className="flex items-center gap-4">
-             <div className="relative group hidden md:block">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within:text-navy transition-colors" />
-                <Input placeholder="Rechercher..." className="pl-10 h-10 w-[240px] bg-slate-50 border-none rounded-full text-xs font-bold focus-visible:ring-navy/10 placeholder:text-slate-300" />
-             </div>
-             <Button variant="ghost" size="icon" className="relative rounded-full hover:bg-slate-100">
-                <Bell className="h-5 w-5 text-slate-500" />
-                <span className="absolute top-2 right-2 h-2 w-2 bg-coral rounded-full ring-2 ring-white" />
-             </Button>
+          <div className="flex items-center gap-2">
+            <div className="relative hidden md:block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <Input placeholder="Rechercher…" className="pl-9 h-9 w-52 bg-slate-50 border-slate-200 rounded-xl text-xs focus-visible:ring-navy/20" />
+            </div>
+            <Button variant="ghost" size="icon" className="relative rounded-xl h-9 w-9 text-slate-500 hover:text-navy hover:bg-slate-100">
+              <Bell className="h-4 w-4" />
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-coral rounded-full ring-2 ring-white" />
+            </Button>
           </div>
         </header>
 
-        <main className="p-8 max-w-7xl mx-auto w-full min-h-[calc(100vh-64px)]">
-           <AnimatePresence mode="wait">
-             <motion.div
-               key={activeView}
-               initial={{ opacity: 0, y: 10 }}
-               animate={{ opacity: 1, y: 0 }}
-               exit={{ opacity: 0, y: -10 }}
-               transition={{ duration: 0.3 }}
-               className="h-full"
-             >
-                {activeView === 'dashboard' && <DashboardView />}
-                {activeView === 'chat' && <ChatInterface />}
-                {activeView === 'documents' && (
-                  <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
-                    <div className="p-6 bg-slate-100 rounded-full"><FileText className="h-12 w-12 text-slate-400" /></div>
-                    <h2 className="text-xl font-bold text-navy">Vos documents juridiques</h2>
-                    <p className="text-slate-400 max-w-xs">Gérez vos contrats, statuts et actes administratifs signés.</p>
-                  </div>
-                )}
-             </motion.div>
-           </AnimatePresence>
+        {/* Page content */}
+        <main className="p-6 max-w-7xl mx-auto w-full relative">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeView}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+            >
+              {activeView === 'dashboard' && <DashboardView diagnostic={diagnostic} setActiveView={setActiveView} />}
+              {activeView === 'chat' && <ChatView />}
+              {activeView === 'documents' && <DocumentsView userId={user.id} />}
+              {activeView === 'billing' && <BillingView />}
+              {activeView === 'settings' && <SettingsView />}
+            </motion.div>
+          </AnimatePresence>
+          <MorphPanel />
         </main>
       </SidebarInset>
     </SidebarProvider>
+  );
+}
+
+export default function EspaceClientPage() {
+  return (
+    <AuthGuard>
+      <EspaceClientContent />
+    </AuthGuard>
   );
 }

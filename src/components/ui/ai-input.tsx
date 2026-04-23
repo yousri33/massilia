@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useEffect, useMemo, useCallback } from "react"
+import React, { useState, useRef, useEffect, useCallback } from "react"
 import { cx } from "class-variance-authority"
 import { AnimatePresence, motion } from "motion/react"
 import ReactMarkdown from "react-markdown"
@@ -8,6 +8,8 @@ import remarkGfm from "remark-gfm"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/useAuth"
+import { getChatHistory, setChatHistory, getDiagnostic } from "@/lib/storage"
 
 interface OrbProps {
   dimension?: string
@@ -198,7 +200,12 @@ const Typewriter = ({ text, onComplete }: { text: string; onComplete?: () => voi
   return <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayedText}</ReactMarkdown>
 }
 
-const SPEED_FACTOR = 0.8
+const QUICK_ACTIONS = [
+  "Créer mon entreprise",
+  "Documents requis",
+  "Besoin DPO ?",
+  "Tarifs et packs",
+]
 
 interface Message {
     role: "user" | "model"
@@ -210,6 +217,7 @@ export function MorphPanel() {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
+  const { user } = useAuth()
   const [showForm, setShowForm] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [msg, setMsg] = useState("")
@@ -222,6 +230,26 @@ export function MorphPanel() {
     window.addEventListener("resize", checkMobile)
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
+
+  // Load persisted chat history when user is identified
+  useEffect(() => {
+    if (user) {
+      const history = getChatHistory(user.id)
+      if (history.length > 0) {
+        setMessages(history.map(m => ({ role: m.role, parts: m.parts })))
+      }
+    }
+  }, [user?.id])
+
+  // Persist chat history on every message change
+  useEffect(() => {
+    if (user && messages.length > 0) {
+      setChatHistory(user.id, messages.map(m => ({
+        ...m,
+        timestamp: new Date().toISOString(),
+      })))
+    }
+  }, [messages, user?.id])
 
   const triggerClose = useCallback((e?: React.MouseEvent) => {
     if (e) {
@@ -256,32 +284,53 @@ export function MorphPanel() {
     return () => document.removeEventListener("mousedown", clickOutsideHandler)
   }, [showForm, triggerClose])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!msg.trim() || isLoading) return;
-    
-    const userMsg = msg;
-    setMsg("");
-    setMessages(prev => [...prev, { role: "user", parts: [{ text: userMsg } ] }])
+  const sendMessage = useCallback(async (text: string, currentMessages: Message[]) => {
+    if (isLoading || !text.trim()) return
+    const updatedMessages = [...currentMessages, { role: "user" as const, parts: [{ text }] }]
+    setMessages(updatedMessages)
     setIsLoading(true)
-
     try {
-      const history = messages.map(m => ({
-          role: m.role,
-          parts: m.parts
-      }));
+      const diagnostic = getDiagnostic()
+      const userContext = user && diagnostic ? {
+        name: user.name,
+        company: user.company,
+        businessType: user.businessType,
+        businessStage: diagnostic.businessStage,
+        complianceNeeds: diagnostic.complianceNeeds,
+      } : null
 
       const res = await fetch("/api/chat", {
         method: "POST",
-        body: JSON.stringify({ message: userMsg, history }),
-      });
-      const data = await res.json();
-      setMessages(prev => [...prev, { role: "model", parts: [{ text: data.message || "Désolé, une erreur est survenue." } ] }])
-    } catch (err) {
-      console.error(err);
+        body: JSON.stringify({
+          message: text,
+          history: currentMessages.map(m => ({ role: m.role, parts: m.parts })),
+          userContext,
+        }),
+      })
+      const data = await res.json()
+      
+      if (!res.ok) {
+        throw new Error(data.error || `Error ${res.status}`);
+      }
+
+      setMessages(prev => [...prev, { role: "model", parts: [{ text: data.message }] }])
+    } catch (err: any) {
+      console.error(err)
+      setMessages(prev => [...prev, { 
+        role: "model", 
+        parts: [{ text: `⚠️ **Erreur de connexion**\n\n${err.message === 'Failed to fetch' ? 'Le serveur est hors ligne ou la connexion a été interrompue.' : err.message}` }] 
+      }])
     } finally {
       setIsLoading(false)
     }
+  }, [isLoading, user])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!msg.trim() || isLoading) return;
+    const userMsg = msg;
+    setMsg("");
+    await sendMessage(userMsg, messages)
   }
 
   const handleKeys = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -369,19 +418,38 @@ export function MorphPanel() {
                 className="flex-1 overflow-y-auto p-4 space-y-5 scrollbar-thin scrollbar-thumb-white/10"
               >
                 {messages.length === 0 && !isLoading && (
-                  <div className="h-full flex flex-col items-center justify-center text-center space-y-6 px-10 animate-in fade-in zoom-in duration-700">
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-5 px-6 animate-in fade-in zoom-in duration-700">
                     <div className="p-5 bg-white/5 rounded-full ring-8 ring-white/[0.02]">
                         <svg className="w-10 h-10 text-coral animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                     </div>
                     <div className="space-y-2">
-                        <p className="text-white text-xl font-black tracking-tight">Bonjour !</p>
-                        <p className="text-white/80 text-sm font-bold">Je suis l'assistant Legal Pilot.</p>
+                        <p className="text-white text-xl font-black tracking-tight">
+                          {user ? `Bonjour, ${user.name.split(' ')[0]} !` : 'Bonjour !'}
+                        </p>
+                        <p className="text-white/80 text-sm font-bold">
+                          {user?.company
+                            ? `Assistant juridique pour ${user.company}`
+                            : "Je suis l'assistant Legal Pilot."}
+                        </p>
                     </div>
                     <p className="text-white/40 text-xs font-bold leading-relaxed max-w-[240px]">
                         Posez votre question pour obtenir une orientation juridique personnalisée en Algérie.
                     </p>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {QUICK_ACTIONS.map((action) => (
+                        <button
+                          key={action}
+                          type="button"
+                          onClick={() => sendMessage(action, messages)}
+                          disabled={isLoading}
+                          className="px-3 py-1.5 bg-white/10 hover:bg-coral/70 text-white/70 hover:text-white text-xs font-black rounded-xl border border-white/10 transition-all"
+                        >
+                          {action}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
 
@@ -460,12 +528,15 @@ export function MorphPanel() {
                       Gemini 2.0 Flash — Aberkane Massilia
                    </p>
                    {messages.length > 0 && (
-                      <button 
+                      <button
                         type="button"
-                        onClick={() => setMessages([])}
+                        onClick={() => {
+                          setMessages([])
+                          if (user) setChatHistory(user.id, [])
+                        }}
                         className="text-[8px] text-coral/60 hover:text-coral font-black uppercase tracking-widest transition-colors"
                       >
-                        Effacer l'historique
+                        Effacer l&apos;historique
                       </button>
                    )}
                 </div>
