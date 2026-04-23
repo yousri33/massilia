@@ -49,6 +49,9 @@ export function useAuth() {
             city: profile.city,
             createdAt: profile.created_at,
           });
+        } else {
+          // User logged in but no profile exists (should redirect to complete signup)
+          setUser(null);
         }
       } else {
         setUser(null);
@@ -63,7 +66,7 @@ export function useAuth() {
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error fetching profile:', error);
