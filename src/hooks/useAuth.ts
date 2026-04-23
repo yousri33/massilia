@@ -25,7 +25,9 @@ export function useAuth() {
     // Then: keep in sync with future auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('[useAuth] onAuthStateChange event:', event, session?.user?.id);
+        // TOKEN_REFRESHED fires every time the user switches browser tabs.
+        // Never set isLoading for it — just silently update the session.
+        const silentEvent = event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION';
 
         if (event === 'SIGNED_OUT') {
           setUser(null);
@@ -34,13 +36,10 @@ export function useAuth() {
         }
 
         if (session?.user) {
-          // Keep loading true while we fetch the profile
-          setIsLoading(true);
+          if (!silentEvent) setIsLoading(true);
           const profile = await fetchProfile(session.user.id);
-          // IMPORTANT: even if profile is null (RLS / missing row), still mark
-          // the user as authenticated so the redirect fires.
           setUser(sessionToUser(session.user, profile ?? {}));
-          setIsLoading(false);
+          if (!silentEvent) setIsLoading(false);
         }
       },
     );
