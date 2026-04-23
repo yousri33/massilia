@@ -8,11 +8,11 @@ import {
   LayoutDashboard, MessageSquare, FileText, CreditCard, Settings,
   Search, Bell, LogOut, Send, Paperclip, CheckCheck, ArrowRight,
   TrendingUp, TrendingDown, Building2, FileSignature, ShieldCheck,
-  Award, Users, Calculator, AlertTriangle, ChevronRight, Sparkles,
-  Clock, CheckCircle2, Circle, AlertCircle, Download, Trash2,
-  ImageIcon, Plus, Mail, Phone, MapPin, Calendar, Activity,
-  BarChart3, FileCheck, Zap, Star, ExternalLink, Filter, Grid3X3,
-  List, RefreshCcw, Upload,
+  Award, Users, Calculator, ChevronRight, Sparkles,
+  Clock, CheckCircle2, Circle, AlertCircle, Download,
+  Mail, MapPin, Calendar, Activity,
+  FileCheck, Zap, Star, Filter, Grid3X3,
+  List, Upload,
 } from 'lucide-react';
 
 import {
@@ -21,30 +21,24 @@ import {
 import { Separator } from '@/components/ui/separator';
 import {
   SidebarProvider, SidebarInset, SidebarTrigger, Sidebar, SidebarHeader,
-  SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel,
+  SidebarContent, SidebarFooter, SidebarGroup,
   SidebarMenu, SidebarMenuItem, SidebarMenuButton,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator as Sep } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { 
-  Dialog, DialogContent, DialogHeader, 
-  DialogTitle, DialogDescription, DialogFooter 
+import {
+  Dialog, DialogContent, DialogHeader,
+  DialogTitle, DialogDescription, DialogFooter
 } from '@/components/ui/dialog';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
@@ -54,12 +48,9 @@ import { AuthGuard } from '@/components/AuthGuard';
 import { FileUpload } from '@/components/FileUpload';
 import { FileList } from '@/components/FileList';
 import { useAuth } from '@/hooks/useAuth';
-import {
-  getDiagnostic,
-} from '@/lib/storage';
-import {
-  getDocuments, getNotifications, markNotificationRead, deleteDocument,
-} from '@/lib/db';
+import { getDiagnostic } from '@/lib/storage';
+import { getDocuments, getNotifications, markNotificationRead } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import { computeComplianceScore, generateRecommendations } from '@/lib/compliance';
 import type { StoredFile, DiagnosticAnswers, Recommendation } from '@/lib/types';
 
@@ -207,7 +198,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 // ─── Dashboard View ───────────────────────────────────────────────────────────
-function DashboardView({ diagnostic, setActiveView }: { diagnostic: DiagnosticAnswers | null; setActiveView: (v: View) => void }) {
+function DashboardView({ diagnostic, setActiveView, logout }: { diagnostic: DiagnosticAnswers | null; setActiveView: (v: View) => void; logout: () => void }) {
   const { user } = useAuth();
   const [cases, setCases] = React.useState<any[]>([]);
   const [casesLoading, setCasesLoading] = React.useState(true);
@@ -239,11 +230,17 @@ function DashboardView({ diagnostic, setActiveView }: { diagnostic: DiagnosticAn
             {new Date().toLocaleDateString('fr-DZ', { weekday: 'long', day: 'numeric', month: 'long' })} · {user.company}
           </motion.p>
         </div>
-        {!diagnostic && (
-          <Button asChild className="bg-coral hover:bg-coral/90 text-white font-black rounded-xl gap-2">
-            <Link href="/diagnostic"><Sparkles className="w-4 h-4" />Faire mon diagnostic</Link>
+        <div className="flex items-center gap-3">
+          {!diagnostic && (
+            <Button asChild className="bg-coral hover:bg-coral/90 text-white font-black rounded-xl gap-2 shadow-md shadow-coral/20 transition-all hover:-translate-y-0.5">
+              <Link href="/diagnostic"><Sparkles className="w-4 h-4" />Faire mon diagnostic</Link>
+            </Button>
+          )}
+          <Button onClick={logout} variant="outline" className="border-slate-200 text-slate-500 hover:text-coral hover:border-coral/30 hover:bg-coral/5 font-black rounded-xl gap-2 transition-all shadow-sm">
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Déconnexion</span>
           </Button>
-        )}
+        </div>
       </div>
 
       {/* Onboarding card */}
@@ -1203,7 +1200,48 @@ function EspaceClientContent() {
 
   React.useEffect(() => {
     if (!user?.id) return;
+    
+    // Initial fetch
     getNotifications(user.id).then(setNotifications);
+
+    // Real-time subscription
+    const channel = supabase
+      .channel(`notifications:${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const newNotif = payload.new;
+          if (!newNotif.read) {
+            setNotifications((prev) => [newNotif, ...prev]);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const updatedNotif = payload.new;
+          if (updatedNotif.read) {
+            setNotifications((prev) => prev.filter((n) => n.id !== updatedNotif.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user?.id]);
 
   // Close notif panel on outside click
@@ -1238,20 +1276,33 @@ function EspaceClientContent() {
 
   return (
     <SidebarProvider>
-      <Sidebar variant="sidebar" collapsible="icon" className="border-r border-slate-100 bg-white">
-        {/* Sidebar header */}
-        <SidebarHeader className="h-[60px] flex items-center px-4 border-b border-slate-100">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <Image src="/logo.png" alt="Logo" width={28} height={28} className="rounded-lg shrink-0" />
-            <span className="font-black text-navy tracking-tight text-base group-data-[collapsible=icon]:hidden truncate">
+      <Sidebar
+        variant="sidebar"
+        collapsible="icon"
+        className="border-r border-slate-100/80 bg-white shadow-sm"
+      >
+        {/* ── Logo ── */}
+        <SidebarHeader className="h-16 flex items-center px-4 border-b border-slate-100">
+          <Link href="/" className="flex items-center gap-2.5 min-w-0">
+            <Image
+              src="/logo.png"
+              alt="Legal Pilot"
+              width={32}
+              height={32}
+              className="rounded-lg shrink-0"
+            />
+            <span className="font-black text-navy tracking-tight text-[15px] group-data-[collapsible=icon]:hidden truncate">
               Legal <span className="text-coral">Pilot</span>
             </span>
-          </div>
+          </Link>
         </SidebarHeader>
 
-        {/* Sidebar content */}
-        <SidebarContent className="px-2 py-3">
+        {/* ── Navigation ── */}
+        <SidebarContent className="px-2 py-4 flex flex-col gap-1">
           <SidebarGroup>
+            <p className="px-3 mb-2 text-[9px] font-black uppercase tracking-[0.18em] text-slate-400 group-data-[collapsible=icon]:hidden">
+              Navigation
+            </p>
             <SidebarMenu className="gap-0.5">
               {NAV_ITEMS.map(({ view, label, icon: Icon, badge }) => (
                 <SidebarMenuItem key={view}>
@@ -1259,16 +1310,16 @@ function EspaceClientContent() {
                     isActive={activeView === view}
                     onClick={() => setActiveView(view)}
                     className={cn(
-                      'h-10 rounded-xl font-bold text-sm transition-all relative',
+                      'h-10 rounded-xl font-semibold text-sm transition-all duration-200 relative group/btn',
                       activeView === view
-                        ? 'bg-navy text-white shadow-sm'
-                        : 'text-slate-500 hover:bg-slate-100 hover:text-navy',
+                        ? 'bg-navy text-white shadow-md shadow-navy/20'
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-navy',
                     )}
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
+                    <Icon className={cn('h-4 w-4 shrink-0 transition-colors', activeView === view ? 'text-white' : 'text-slate-400 group-hover/btn:text-navy')} />
                     <span className="group-data-[collapsible=icon]:hidden">{label}</span>
                     {badge && (
-                      <span className="ml-auto group-data-[collapsible=icon]:hidden text-[10px] font-black bg-coral text-white rounded-full w-4 h-4 flex items-center justify-center shrink-0">
+                      <span className="ml-auto group-data-[collapsible=icon]:hidden text-[9px] font-black bg-coral text-white rounded-full w-4 h-4 flex items-center justify-center shrink-0">
                         {badge}
                       </span>
                     )}
@@ -1279,44 +1330,47 @@ function EspaceClientContent() {
           </SidebarGroup>
         </SidebarContent>
 
-        {/* Sidebar footer */}
-        <SidebarFooter className="p-3 border-t border-slate-100">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 transition-colors group">
-                <Avatar className="h-8 w-8 shrink-0">
-                  <AvatarFallback className="bg-navy text-white text-xs font-black">{initials}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0 text-left group-data-[collapsible=icon]:hidden">
-                  <p className="text-xs font-black text-navy truncate">{user.name}</p>
-                  <p className="text-[10px] text-slate-400 truncate">{user.company}</p>
-                </div>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="start" className="w-52 rounded-xl">
-              <DropdownMenuItem onClick={() => setActiveView('settings')} className="rounded-lg font-medium">
-                <Settings className="w-4 h-4 mr-2" />Paramètres
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout} className="rounded-lg font-medium text-coral focus:text-coral">
-                <LogOut className="w-4 h-4 mr-2" />Se déconnecter
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        {/* ── User + Logout ── */}
+        <SidebarFooter className="p-3 border-t border-slate-100 space-y-1">
+          {/* User card */}
+          <button
+            onClick={() => setActiveView('settings')}
+            className="w-full flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-slate-50 transition-colors group text-left"
+          >
+            <Avatar className="h-8 w-8 shrink-0 ring-2 ring-slate-100">
+              <AvatarFallback className="bg-gradient-to-br from-navy to-[#2d4a7a] text-white text-xs font-black">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
+              <p className="text-xs font-black text-navy truncate">{user.name}</p>
+              <p className="text-[10px] text-slate-400 font-medium truncate">{user.company}</p>
+            </div>
+            <ChevronRight className="w-3 h-3 text-slate-300 group-hover:text-navy shrink-0 group-data-[collapsible=icon]:hidden" />
+          </button>
+
+          {/* Logout — always visible */}
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-400 hover:text-coral hover:bg-coral/5 transition-all group text-sm font-semibold"
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            <span className="group-data-[collapsible=icon]:hidden">Se déconnecter</span>
+          </button>
         </SidebarFooter>
       </Sidebar>
 
-      {/* Main content */}
-      <SidebarInset className="bg-slate-50 min-h-screen">
+      {/* ── Main Content ── */}
+      <SidebarInset className="bg-[#f8f9fc] min-h-screen">
         {/* Top bar */}
-        <header className="sticky top-0 z-30 flex h-[60px] items-center justify-between px-5 bg-white/80 backdrop-blur-sm border-b border-slate-100">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between px-6 bg-white border-b border-slate-100 shadow-sm">
           <div className="flex items-center gap-3">
-            <SidebarTrigger className="text-slate-500 hover:text-navy" />
-            <Sep orientation="vertical" className="h-4 bg-slate-200" />
+            <SidebarTrigger className="text-slate-400 hover:text-navy rounded-lg" />
+            <Sep orientation="vertical" className="h-5 bg-slate-200" />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbList className="text-xs font-bold text-slate-400">Espace Client</BreadcrumbList>
+                  <span className="text-xs font-semibold text-slate-400">Espace Client</span>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
@@ -1327,78 +1381,105 @@ function EspaceClientContent() {
           </div>
           <div className="flex items-center gap-2">
             <div className="relative hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-              <Input placeholder="Rechercher…" className="pl-9 h-9 w-52 bg-slate-50 border-slate-200 rounded-xl text-xs focus-visible:ring-navy/20" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              <Input placeholder="Rechercher…" className="pl-9 h-9 w-48 bg-slate-50 border-slate-200 rounded-xl text-xs focus-visible:ring-navy/20" />
             </div>
+            <Sep orientation="vertical" className="h-5 bg-slate-200 hidden md:block" />
             {/* Notification Bell */}
             <div className="relative" ref={notifRef}>
               <Button
                 variant="ghost" size="icon"
                 onClick={() => setShowNotifs(v => !v)}
-                className="relative rounded-xl h-9 w-9 text-slate-500 hover:text-navy hover:bg-slate-100"
+                className="relative rounded-xl h-9 w-9 text-slate-500 hover:text-navy hover:bg-slate-100 transition-all active:scale-95"
               >
-                <Bell className="h-4 w-4" />
+                <Bell className="h-4.5 w-4.5" />
                 {notifications.length > 0 && (
-                  <span className="absolute top-1 right-1 h-4 w-4 bg-coral text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white">
-                    {notifications.length > 9 ? '9+' : notifications.length}
-                  </span>
+                  <>
+                    <span className="absolute top-1.5 right-1.5 h-3 w-3 bg-coral text-white text-[8px] font-black rounded-full flex items-center justify-center ring-2 ring-white z-10">
+                      {notifications.length > 9 ? '9+' : notifications.length}
+                    </span>
+                    <span className="absolute top-1.5 right-1.5 h-3 w-3 bg-coral rounded-full animate-ping opacity-40" />
+                  </>
                 )}
               </Button>
-              {showNotifs && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  className="absolute right-0 top-11 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden"
-                >
-                  <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                    <p className="text-xs font-black text-navy uppercase tracking-widest">Notifications</p>
-                    {notifications.length > 0 && (
-                      <button
-                        onClick={() => notifications.forEach(n => handleMarkRead(n.id))}
-                        className="text-[10px] font-black text-coral hover:underline"
-                      >
-                        Tout marquer lu
-                      </button>
-                    )}
-                  </div>
-                  {notifications.length === 0 ? (
-                    <div className="p-6 text-center">
-                      <Bell className="w-6 h-6 text-slate-200 mx-auto mb-2" />
-                      <p className="text-xs text-slate-400 font-medium">Aucune nouvelle notification</p>
+              <AnimatePresence>
+                {showNotifs && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 12, scale: 0.95, filter: 'blur(4px)' }}
+                    animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, y: 8, scale: 0.95, filter: 'blur(4px)' }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    className="absolute right-0 top-12 w-80 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-navy/10 border border-slate-100 z-50 overflow-hidden"
+                  >
+                    <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white/50">
+                      <p className="text-[10px] font-black text-navy uppercase tracking-widest">Notifications</p>
+                      {notifications.length > 0 && (
+                        <button
+                          onClick={() => notifications.forEach(n => handleMarkRead(n.id))}
+                          className="text-[10px] font-black text-coral hover:text-coral/80 transition-colors"
+                        >
+                          Tout marquer lu
+                        </button>
+                      )}
                     </div>
-                  ) : (
-                    <div className="max-h-72 overflow-y-auto divide-y divide-slate-50">
-                      {notifications.map(n => (
-                        <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
-                          <div className={cn('w-2 h-2 rounded-full mt-1.5 shrink-0', {
-                            'bg-coral': n.type === 'action',
-                            'bg-blue-400': n.type === 'info',
-                            'bg-green-400': n.type === 'success',
-                          })} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-black text-navy">{n.title}</p>
-                            <p className="text-[11px] text-slate-500 font-medium mt-0.5 line-clamp-2">{n.body}</p>
-                            <p className="text-[10px] text-slate-300 mt-1">{new Date(n.created_at).toLocaleDateString('fr-DZ')}</p>
-                          </div>
-                          <button
-                            onClick={() => handleMarkRead(n.id)}
-                            className="text-slate-300 hover:text-coral transition-colors shrink-0 mt-0.5"
-                          >
-                            <CheckCheck className="w-3.5 h-3.5" />
-                          </button>
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center bg-white/50">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-3">
+                          <Bell className="w-6 h-6 text-slate-200" />
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </motion.div>
-              )}
+                        <p className="text-xs text-slate-400 font-bold">Aucune notification</p>
+                      </div>
+                    ) : (
+                      <div className="max-h-[360px] overflow-y-auto divide-y divide-slate-50 scrollbar-hide">
+                        {notifications.map((n, i) => (
+                          <motion.div 
+                            key={n.id}
+                            initial={{ opacity: 0, x: 10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.05 }}
+                            className="flex items-start gap-3 px-4 py-4 hover:bg-slate-50/80 transition-all cursor-default group"
+                          >
+                            <div className={cn('w-2 h-2 rounded-full mt-1.5 shrink-0 shadow-sm', {
+                              'bg-coral shadow-coral/20': n.type === 'action',
+                              'bg-blue-400 shadow-blue-400/20': n.type === 'info',
+                              'bg-green-400 shadow-green-400/20': n.type === 'success',
+                            })} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-black text-navy leading-tight">{n.title}</p>
+                              <p className="text-[11px] text-slate-500 font-medium mt-1 line-clamp-2 leading-relaxed">{n.body}</p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <Clock className="w-3 h-3 text-slate-300" />
+                                <p className="text-[9px] text-slate-300 font-bold uppercase tracking-wider">
+                                  {new Date(n.created_at).toLocaleDateString('fr-DZ', { day: 'numeric', month: 'short' })}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleMarkRead(n.id)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-200 hover:text-navy hover:bg-white hover:shadow-sm transition-all opacity-0 group-hover:opacity-100"
+                            >
+                              <CheckCheck className="w-4 h-4" />
+                            </button>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                    {notifications.length > 0 && (
+                      <div className="p-3 bg-slate-50/50 border-t border-slate-100 text-center">
+                        <button className="text-[9px] font-black text-slate-400 uppercase tracking-widest hover:text-navy transition-colors">
+                          Voir tout l&apos;historique
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="p-6 max-w-7xl mx-auto w-full relative">
+        <main className="p-6 md:p-8 max-w-7xl mx-auto w-full relative">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeView}
@@ -1407,7 +1488,7 @@ function EspaceClientContent() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              {activeView === 'dashboard' && <DashboardView diagnostic={diagnostic} setActiveView={setActiveView} />}
+              {activeView === 'dashboard' && <DashboardView diagnostic={diagnostic} setActiveView={setActiveView} logout={logout} />}
               {activeView === 'chat' && <ChatView />}
               {activeView === 'documents' && <DocumentsView userId={user.id} />}
               {activeView === 'billing' && <BillingView />}
