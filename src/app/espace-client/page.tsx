@@ -214,49 +214,71 @@ function DashboardView({ diagnostic, setActiveView }: { diagnostic: DiagnosticAn
   }, [user?.id]);
 
   if (!user) return null;
-  const firstName = user.name.split(' ')[0];
+  // Fallback: use email prefix if name is blank (happens before profile syncs)
+  const rawName = user.name?.trim() || user.email?.split('@')[0] || 'vous';
+  const firstName = rawName.split(' ')[0];
   const score = diagnostic ? computeComplianceScore(diagnostic) : null;
   const recs: Recommendation[] = diagnostic ? generateRecommendations(user, diagnostic) : [];
+  const companyLabel = user.company?.trim() || '';
+  const cityLabel = user.city?.trim() || 'Algérie';
 
   const typeColors: Record<string, string> = {
-    'Création': 'bg-blue-50 text-blue-700 border-blue-200',
-    'Contrat': 'bg-purple-50 text-purple-700 border-purple-200',
-    'PI': 'bg-amber-50 text-amber-700 border-amber-200',
-    'Conformité': 'bg-green-50 text-green-700 border-green-200',
+    'Création':   'bg-blue-50   text-blue-700   border-blue-200',
+    'Contrat':    'bg-purple-50 text-purple-700  border-purple-200',
+    'PI':         'bg-amber-50  text-amber-700   border-amber-200',
+    'Conformité': 'bg-teal-50   text-teal-700    border-teal-200',
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
       {/* ── Welcome Banner ── */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy via-[#1a3a6b] to-[#0f2447] p-6 md:p-8 text-white"
+        className="relative rounded-2xl bg-navy overflow-hidden"
       >
-        {/* Decorative blobs */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-coral/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-
-        <div className="relative flex items-center justify-between gap-4 flex-wrap">
+        {/* subtle mesh */}
+        <div className="absolute inset-0 opacity-30"
+          style={{ backgroundImage: 'radial-gradient(circle at 80% 50%, #EF6C77 0%, transparent 55%), radial-gradient(circle at 10% 80%, #1e4080 0%, transparent 55%)' }} />
+        <div className="relative px-6 py-7 md:px-8 flex items-center justify-between gap-6 flex-wrap">
+          {/* Left text */}
           <div>
-            <p className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-1">
+            <p className="text-white/40 text-[11px] font-bold uppercase tracking-[0.15em] mb-2">
               {new Date().toLocaleDateString('fr-DZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">
-              Bonjour, <span className="text-coral">{firstName}</span> 👋
+            <h1 className="text-2xl md:text-[28px] font-black text-white tracking-tight leading-none">
+              Bonjour,&nbsp;<span className="text-coral">{firstName}</span>&nbsp;👋
             </h1>
-            <p className="text-white/60 text-sm font-medium mt-1">{user.company} · {user.city || 'Algérie'}</p>
+            {(companyLabel || cityLabel) && (
+              <p className="text-white/50 text-sm font-medium mt-2">
+                {companyLabel}{companyLabel && cityLabel ? ' · ' : ''}{cityLabel}
+              </p>
+            )}
           </div>
-          {!diagnostic ? (
-            <Button asChild className="bg-coral hover:bg-coral/90 text-white font-black rounded-xl gap-2 shadow-lg shadow-coral/30 transition-all hover:scale-105 shrink-0">
+          {/* Right: score badge or CTA */}
+          {score !== null ? (
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl px-4 py-3">
+              <div className="text-right">
+                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest">Conformité</p>
+                <p className="text-white font-black text-2xl tabular-nums leading-none">{score}<span className="text-sm text-white/50">%</span></p>
+                <p className="text-[10px] font-bold mt-0.5"
+                   style={{ color: score < 40 ? '#EF6C77' : score < 70 ? '#f59e0b' : '#22c55e' }}>
+                  {score < 40 ? 'Faible' : score < 70 ? 'Partielle' : 'Bonne'}
+                </p>
+              </div>
+              <svg className="w-10 h-10 -rotate-90 shrink-0" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
+                <circle cx="18" cy="18" r="14" fill="none"
+                  stroke={score < 40 ? '#EF6C77' : score < 70 ? '#f59e0b' : '#22c55e'}
+                  strokeWidth="3" strokeLinecap="round"
+                  strokeDasharray={`${(score / 100) * 87.96} 87.96`} />
+              </svg>
+            </div>
+          ) : (
+            <Button asChild className="bg-coral hover:bg-coral/90 text-white font-black rounded-xl gap-2 shadow-lg shadow-coral/30 shrink-0">
               <Link href="/diagnostic"><Sparkles className="w-4 h-4" />Faire mon diagnostic</Link>
             </Button>
-          ) : score !== null && (
-            <div className="text-center shrink-0">
-              <ComplianceRing score={score} size="sm" />
-              <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-1">Conformité</p>
-            </div>
           )}
         </div>
       </motion.div>
@@ -405,92 +427,93 @@ function DashboardView({ diagnostic, setActiveView }: { diagnostic: DiagnosticAn
           )}
         </div>
 
-        {/* Right column */}
+        {/* ── Right column ── */}
         <div className="space-y-4">
 
-          {/* Expert card — redesigned */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f2447] to-navy p-5 text-white">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-coral/15 rounded-full blur-2xl pointer-events-none" />
-            <div className="relative">
-              <p className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-3">Votre expert dédié</p>
-              <div className="flex items-center gap-3 mb-4">
+          {/* Expert card — white with navy accent strip */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="bg-navy/4 border-b border-slate-100 px-4 py-2.5">
+              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Votre expert dédié</p>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="flex items-center gap-3">
                 <div className="relative">
-                  <Avatar className="h-12 w-12 ring-2 ring-white/20">
+                  <Avatar className="h-11 w-11 ring-2 ring-slate-100">
                     <AvatarImage src={EXPERT.avatar} />
-                    <AvatarFallback className="bg-slate-700 font-black">AH</AvatarFallback>
+                    <AvatarFallback className="bg-navy text-white font-black text-sm">AH</AvatarFallback>
                   </Avatar>
-                  <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-navy" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white" />
                 </div>
-                <div>
-                  <p className="font-black text-sm text-white">{EXPERT.name}</p>
-                  <p className="text-white/50 text-[11px] font-medium">{EXPERT.role}</p>
-                  <p className="text-emerald-400 text-[10px] font-black mt-0.5 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-black text-navy text-sm truncate">{EXPERT.name}</p>
+                  <p className="text-slate-400 text-[11px] font-medium">{EXPERT.role}</p>
+                  <p className="text-emerald-500 text-[10px] font-black flex items-center gap-1 mt-0.5">
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
                     En ligne · {EXPERT.responseTime}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveView('chat')}
-                className="w-full flex items-center justify-center gap-2 bg-coral hover:bg-coral/90 text-white text-sm font-black rounded-xl py-2.5 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-coral/20"
+                className="w-full flex items-center justify-center gap-2 bg-navy hover:bg-navy/90 text-white text-sm font-black rounded-xl py-2.5 transition-all active:scale-95"
               >
-                <MessageSquare className="w-4 h-4" />
+                <MessageSquare className="w-3.5 h-3.5" />
                 Démarrer la conversation
               </button>
             </div>
           </div>
 
-          {/* Compliance (if available) */}
-          {score !== null && (
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-              <h3 className="text-xs font-black text-navy uppercase tracking-wider mb-4">Score de conformité</h3>
-              <div className="flex items-center gap-4">
-                <ComplianceRing score={score} size="md" />
-                <div className="flex-1">
-                  <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                    {score < 40 ? 'Des lacunes importantes nécessitent votre attention immédiate.' :
-                      score < 70 ? 'Bonne base — quelques points à renforcer.' :
-                        'Votre entreprise est bien protégée.'}
-                  </p>
-                  <Link href="/diagnostic" className="mt-2 inline-flex items-center gap-1 text-xs font-black text-navy hover:text-coral transition-colors">
-                    Refaire le diagnostic <ChevronRight className="w-3 h-3" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Quick actions */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-            <p className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Actions rapides</p>
+            <div className="px-4 py-2.5 border-b border-slate-100">
+              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Actions rapides</p>
+            </div>
             <div className="p-2">
-              {[
-                { label: 'Uploader un document', icon: Upload, onClick: () => setActiveView('documents'), color: 'text-blue-500' },
-                { label: 'Voir mes factures', icon: CreditCard, onClick: () => setActiveView('billing'), color: 'text-amber-500' },
-                { label: 'Mon diagnostic', icon: Activity, href: '/diagnostic', color: 'text-coral' },
-                { label: 'Contacter un avocat', icon: MessageSquare, onClick: () => setActiveView('chat'), color: 'text-violet-500' },
-              ].map((item) => {
+              {([
+                { label: 'Uploader un document', icon: Upload,       onClick: () => setActiveView('documents'), dot: 'bg-blue-500' },
+                { label: 'Voir mes factures',    icon: CreditCard,   onClick: () => setActiveView('billing'),   dot: 'bg-amber-500' },
+                { label: 'Mon diagnostic',       icon: Activity,     href: '/diagnostic',                       dot: 'bg-coral' },
+                { label: 'Contacter un avocat',  icon: MessageSquare,onClick: () => setActiveView('chat'),      dot: 'bg-violet-500' },
+              ] as const).map((item) => {
                 const inner = (
                   <>
-                    <div className={cn('w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center shrink-0', item.color)}>
-                      <item.icon className="w-3.5 h-3.5" />
-                    </div>
-                    <span className="text-sm font-semibold text-slate-700 flex-1">{item.label}</span>
+                    <span className={cn('w-2 h-2 rounded-full shrink-0', item.dot)} />
+                    <span className="text-sm font-semibold text-slate-700 flex-1 text-left">{item.label}</span>
                     <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
                   </>
                 );
-                return item.href ? (
+                return 'href' in item ? (
                   <Link key={item.label} href={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors">
                     {inner}
                   </Link>
                 ) : (
-                  <button key={item.label} onClick={item.onClick} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors">
+                  <button key={item.label} onClick={(item as any).onClick} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors">
                     {inner}
                   </button>
                 );
               })}
             </div>
           </div>
+
+          {/* Compliance score (if diagnostic done) */}
+          {score !== null && (
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-slate-100">
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Score de conformité</p>
+              </div>
+              <div className="p-4 flex items-center gap-4">
+                <ComplianceRing score={score} size="md" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                    {score < 40 ? 'Des lacunes importantes à corriger.' : score < 70 ? 'Bonne base — quelques points à renforcer.' : 'Entreprise bien protégée.'}
+                  </p>
+                  <Link href="/diagnostic" className="mt-2 inline-flex items-center gap-1 text-xs font-black text-navy hover:text-coral transition-colors">
+                    Refaire <ChevronRight className="w-3 h-3" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
