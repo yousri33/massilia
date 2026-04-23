@@ -94,39 +94,45 @@ export function useAuth() {
 
   const signup = useCallback(
     async (payload: SignupPayload): Promise<{ ok: boolean; error?: string }> => {
+      const fullName = `${payload.firstName} ${payload.lastName}`;
+
+      // Pass all profile fields in user_metadata so the DB trigger can create
+      // the profile row even when email confirmation is required (no session yet)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: payload.email,
         password: payload.password,
         options: {
-          // Skip email confirmation — user is immediately active
-          data: { name: `${payload.firstName} ${payload.lastName}` },
+          data: {
+            name: fullName,
+            company: payload.company,
+            business_type: payload.businessType,
+            city: payload.city,
+          },
         },
       });
 
       if (authError) return { ok: false, error: authError.message };
       if (!authData.user) return { ok: false, error: 'Inscription échouée. Réessayez.' };
 
-      // Insert profile row
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: authData.user.id,
-        name: `${payload.firstName} ${payload.lastName}`,
-        company: payload.company,
-        business_type: payload.businessType,
-        city: payload.city,
-      });
+      // If a session exists (email confirmation disabled), upsert the profile
+      // and send the welcome notification. The trigger already created the row,
+      // so we use upsert to avoid conflicts.
+      if (authData.session) {
+        await supabase.from('profiles').upsert({
+          id: authData.user.id,
+          name: fullName,
+          company: payload.company,
+          business_type: payload.businessType,
+          city: payload.city,
+        });
 
-      if (profileError) {
-        console.error('Profile insert error:', profileError.message);
-        return { ok: false, error: profileError.message };
+        await insertNotification(
+          authData.user.id,
+          'Bienvenue sur Legal Pilot ! 👋',
+          'Complétez votre diagnostic pour obtenir votre score de conformité.',
+          'action',
+        );
       }
-
-      // Welcome notification
-      await insertNotification(
-        authData.user.id,
-        'Bienvenue sur Legal Pilot ! 👋',
-        'Complétez votre diagnostic pour obtenir votre score de conformité.',
-        'action',
-      );
 
       return { ok: true };
     },

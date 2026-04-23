@@ -55,7 +55,7 @@ export async function insertDocument(userId: string, doc: Omit<StoredFile, 'id'>
       status: 'pending',
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error inserting document:', error);
