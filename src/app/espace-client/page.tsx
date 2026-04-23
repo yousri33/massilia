@@ -198,7 +198,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 // ─── Dashboard View ───────────────────────────────────────────────────────────
-function DashboardView({ diagnostic, setActiveView, logout }: { diagnostic: DiagnosticAnswers | null; setActiveView: (v: View) => void; logout: () => void }) {
+function DashboardView({ diagnostic, setActiveView }: { diagnostic: DiagnosticAnswers | null; setActiveView: (v: View) => void; logout?: () => void }) {
   const { user } = useAuth();
   const [cases, setCases] = React.useState<any[]>([]);
   const [casesLoading, setCasesLoading] = React.useState(true);
@@ -218,152 +218,181 @@ function DashboardView({ diagnostic, setActiveView, logout }: { diagnostic: Diag
   const score = diagnostic ? computeComplianceScore(diagnostic) : null;
   const recs: Recommendation[] = diagnostic ? generateRecommendations(user, diagnostic) : [];
 
+  const typeColors: Record<string, string> = {
+    'Création': 'bg-blue-50 text-blue-700 border-blue-200',
+    'Contrat': 'bg-purple-50 text-purple-700 border-purple-200',
+    'PI': 'bg-amber-50 text-amber-700 border-amber-200',
+    'Conformité': 'bg-green-50 text-green-700 border-green-200',
+  };
+
   return (
-    <div className="space-y-7">
-      {/* Header greeting */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <motion.h1 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-black text-navy tracking-tight">
-            Bonjour, <span className="text-coral">{firstName}</span> 👋
-          </motion.h1>
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="text-slate-500 font-medium mt-1">
-            {new Date().toLocaleDateString('fr-DZ', { weekday: 'long', day: 'numeric', month: 'long' })} · {user.company}
-          </motion.p>
-        </div>
-        <div className="flex items-center gap-3">
-          {!diagnostic && (
-            <Button asChild className="bg-coral hover:bg-coral/90 text-white font-black rounded-xl gap-2 shadow-md shadow-coral/20 transition-all hover:-translate-y-0.5">
+    <div className="space-y-6">
+
+      {/* ── Welcome Banner ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy via-[#1a3a6b] to-[#0f2447] p-6 md:p-8 text-white"
+      >
+        {/* Decorative blobs */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-coral/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="relative flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-1">
+              {new Date().toLocaleDateString('fr-DZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight">
+              Bonjour, <span className="text-coral">{firstName}</span> 👋
+            </h1>
+            <p className="text-white/60 text-sm font-medium mt-1">{user.company} · {user.city || 'Algérie'}</p>
+          </div>
+          {!diagnostic ? (
+            <Button asChild className="bg-coral hover:bg-coral/90 text-white font-black rounded-xl gap-2 shadow-lg shadow-coral/30 transition-all hover:scale-105 shrink-0">
               <Link href="/diagnostic"><Sparkles className="w-4 h-4" />Faire mon diagnostic</Link>
             </Button>
+          ) : score !== null && (
+            <div className="text-center shrink-0">
+              <ComplianceRing score={score} size="sm" />
+              <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-1">Conformité</p>
+            </div>
           )}
-          <Button onClick={logout} variant="outline" className="border-slate-200 text-slate-500 hover:text-coral hover:border-coral/30 hover:bg-coral/5 font-black rounded-xl gap-2 transition-all shadow-sm">
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Déconnexion</span>
-          </Button>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Onboarding card */}
+      {/* ── Onboarding prompt ── */}
       {!diagnostic && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="border-2 border-dashed border-coral/25 bg-gradient-to-br from-coral/5 to-transparent rounded-2xl shadow-none">
-            <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-5">
-              <div className="w-14 h-14 rounded-2xl bg-coral/10 flex items-center justify-center shrink-0">
-                <Sparkles className="w-7 h-7 text-coral" />
-              </div>
-              <div className="flex-1 text-center sm:text-left">
-                <h3 className="font-black text-navy text-lg">Complétez votre diagnostic juridique</h3>
-                <p className="text-slate-500 text-sm mt-1">Obtenez votre score de conformité et des recommandations personnalisées pour {user.company}.</p>
-              </div>
-              <Button asChild className="bg-navy hover:bg-navy/90 text-white font-black rounded-xl px-6 shrink-0">
-                <Link href="/diagnostic">Démarrer <ArrowRight className="w-4 h-4 ml-1" /></Link>
-              </Button>
-            </CardContent>
-          </Card>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <div className="flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-dashed border-coral/30 bg-coral/5">
+            <div className="w-10 h-10 rounded-xl bg-coral/10 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-coral" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-navy text-sm">Complétez votre diagnostic juridique</p>
+              <p className="text-slate-500 text-xs mt-0.5 truncate">Score de conformité + recommandations personnalisées pour {user.company}</p>
+            </div>
+            <Button asChild size="sm" className="bg-navy hover:bg-navy/90 text-white font-black rounded-xl shrink-0">
+              <Link href="/diagnostic">Démarrer <ArrowRight className="w-3.5 h-3.5 ml-1" /></Link>
+            </Button>
+          </div>
         </motion.div>
       )}
 
-      {/* KPI Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <KpiCard label="Dossiers Actifs" value="4" trend="up" trendLabel="+1 ce mois" icon={FileText} iconBg="bg-blue-500" />
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <KpiCard label="Documents Signés" value="12" trend="up" trendLabel="+3" icon={FileCheck} iconBg="bg-green-500" />
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <KpiCard label="Factures en attente" value="2" trend="neutral" trendLabel="stable" icon={CreditCard} iconBg="bg-amber-500" />
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <KpiCard label="Temps de réponse" value="< 2" unit="heures" trend="up" trendLabel="excellent" icon={Zap} iconBg="bg-purple-500" />
-        </motion.div>
+      {/* ── KPI Stats ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        {[
+          { label: 'Dossiers actifs', value: cases.filter(c => c.status !== 'Terminé').length || 4, icon: FileText, color: 'from-blue-500 to-blue-600', light: 'bg-blue-50 text-blue-600', trend: '+1 ce mois' },
+          { label: 'Documents', value: 12, icon: FileCheck, color: 'from-emerald-500 to-emerald-600', light: 'bg-emerald-50 text-emerald-600', trend: '+3 récents' },
+          { label: 'Factures en attente', value: 2, icon: CreditCard, color: 'from-amber-500 to-amber-600', light: 'bg-amber-50 text-amber-600', trend: '8 500 DA' },
+          { label: 'Réponse avocat', value: '< 2h', icon: Zap, color: 'from-violet-500 to-violet-600', light: 'bg-violet-50 text-violet-600', trend: 'Excellent' },
+        ].map((stat, i) => (
+          <motion.div key={stat.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
+            <div className="bg-white rounded-2xl p-4 md:p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group">
+              <div className="flex items-center justify-between mb-3">
+                <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br', stat.color)}>
+                  <stat.icon className="w-4 h-4 text-white" />
+                </div>
+                <span className={cn('text-[10px] font-bold px-2 py-1 rounded-lg', stat.light)}>{stat.trend}</span>
+              </div>
+              <p className="text-2xl font-black text-navy tabular-nums">{stat.value}</p>
+              <p className="text-xs text-slate-400 font-semibold mt-0.5">{stat.label}</p>
+            </div>
+          </motion.div>
+        ))}
       </div>
 
-      {/* Main grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Cases table */}
-        <div className="xl:col-span-2 space-y-4">
-          <Card className="border-0 shadow-sm bg-white rounded-2xl overflow-hidden">
-            <CardHeader className="px-6 py-5 border-b border-slate-50 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-base font-black text-navy">Dossiers Récents</CardTitle>
-                <CardDescription className="text-xs mt-0.5">Suivi en temps réel de vos procédures</CardDescription>
-              </div>
-              <Button variant="ghost" size="sm" className="text-xs font-black text-coral hover:text-coral hover:bg-coral/5 rounded-xl gap-1">
-                Tout voir <ChevronRight className="w-3 h-3" />
-              </Button>
-            </CardHeader>
-            <Table>
-              <TableHeader>
-                <TableRow className="border-slate-50 hover:bg-transparent">
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-6">Dossier</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Type</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">Progression</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Statut</TableHead>
-                  <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 pr-6 hidden lg:table-cell">Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {casesLoading ? (
-                  [1,2,3].map(i => (
-                    <TableRow key={i} className="border-slate-50">
-                      <TableCell className="pl-6 py-4"><Skeleton className="h-4 w-40" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell className="hidden md:table-cell"><Skeleton className="h-2 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
-                      <TableCell className="pr-6 hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
-                    </TableRow>
-                  ))
-                ) : cases.map((c) => (
-                  <TableRow key={c.id} className="border-slate-50 hover:bg-slate-50/60 transition-colors cursor-pointer">
-                    <TableCell className="pl-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-navy/5 flex items-center justify-center shrink-0">
-                          <FileText className="w-4 h-4 text-navy/40" />
-                        </div>
-                        <span className="font-bold text-navy text-sm">{c.title}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-xs font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">{c.type}</span>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <div className="flex items-center gap-2 min-w-[100px]">
-                        <Progress value={c.progress} className="h-1.5 flex-1 bg-slate-100" />
-                        <span className="text-xs font-black text-slate-400 w-8 text-right">{c.progress}%</span>
-                      </div>
-                    </TableCell>
-                    <TableCell><StatusBadge status={c.status} /></TableCell>
-                    <TableCell className="pr-6 text-xs text-slate-400 font-medium hidden lg:table-cell">{c.date || c.created_at?.slice(0,10)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+      {/* ── Main 2-col Grid ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
 
-          {/* Recommendations */}
+        {/* Left — Cases */}
+        <div className="xl:col-span-2 space-y-5">
+
+          {/* Cases card */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div>
+                <h2 className="text-sm font-black text-navy">Dossiers récents</h2>
+                <p className="text-xs text-slate-400 font-medium mt-0.5">Suivi en temps réel de vos procédures</p>
+              </div>
+              <button className="text-xs font-black text-coral hover:text-coral/80 flex items-center gap-1 transition-colors">
+                Tout voir <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+
+            <div className="divide-y divide-slate-50">
+              {casesLoading ? (
+                [1,2,3,4].map(i => (
+                  <div key={i} className="flex items-center gap-4 px-5 py-4">
+                    <Skeleton className="w-9 h-9 rounded-xl shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-3.5 w-44" />
+                      <Skeleton className="h-2 w-full" />
+                    </div>
+                    <Skeleton className="h-6 w-20 rounded-full shrink-0" />
+                  </div>
+                ))
+              ) : cases.map((c, i) => (
+                <motion.div
+                  key={c.id}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-navy/5 group-hover:bg-navy/10 flex items-center justify-center shrink-0 transition-colors">
+                    <FileText className="w-4 h-4 text-navy/40" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-navy truncate">{c.title}</p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <div className="flex-1 bg-slate-100 rounded-full h-1.5 max-w-[120px]">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-navy to-blue-500 transition-all duration-700"
+                          style={{ width: `${c.progress}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] font-black text-slate-400">{c.progress}%</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={cn('text-[10px] font-black px-2 py-1 rounded-lg border hidden sm:inline-block', typeColors[c.type] || 'bg-slate-50 text-slate-500 border-slate-200')}>{c.type}</span>
+                    <StatusBadge status={c.status} />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* AI Recommendations */}
           {recs.length > 0 && (
-            <Card className="border-0 shadow-sm bg-white rounded-2xl overflow-hidden">
-              <CardHeader className="px-6 py-5 border-b border-slate-50">
-                <CardTitle className="text-base font-black text-navy flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-coral" />
-                  Recommandations IA ({recs.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 space-y-3">
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-100">
+                <div className="w-7 h-7 rounded-lg bg-coral/10 flex items-center justify-center">
+                  <Sparkles className="w-3.5 h-3.5 text-coral" />
+                </div>
+                <h2 className="text-sm font-black text-navy">Recommandations IA</h2>
+                <span className="ml-auto text-[10px] font-black text-white bg-coral rounded-full w-5 h-5 flex items-center justify-center">{recs.length}</span>
+              </div>
+              <div className="divide-y divide-slate-50">
                 {recs.slice(0, 3).map((rec) => {
                   const Icon = ICON_MAP[rec.icon] ?? ShieldCheck;
-                  const pStyle = { haute: 'bg-coral/10 text-coral border-coral/20', moyenne: 'bg-amber-50 text-amber-700 border-amber-200', faible: 'bg-green-50 text-green-700 border-green-200' }[rec.priority];
-                  const pLabel = { haute: 'Haute', moyenne: 'Moyenne', faible: 'Faible' }[rec.priority];
+                  const priorityBadge = {
+                    haute: 'bg-red-50 text-red-600 border-red-200',
+                    moyenne: 'bg-amber-50 text-amber-700 border-amber-200',
+                    faible: 'bg-green-50 text-green-700 border-green-200',
+                  }[rec.priority];
                   return (
-                    <div key={rec.id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors group cursor-pointer">
-                      <div className="w-9 h-9 rounded-xl bg-navy/5 flex items-center justify-center shrink-0">
+                    <div key={rec.id} className="flex items-start gap-3 px-5 py-4 hover:bg-slate-50 transition-colors cursor-pointer group">
+                      <div className="w-8 h-8 rounded-xl bg-navy/5 flex items-center justify-center shrink-0 mt-0.5">
                         <Icon className="w-4 h-4 text-navy/50" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-black text-navy text-sm">{rec.title}</span>
-                          <span className={cn('text-[10px] font-black px-2 py-0.5 rounded-full border', pStyle)}>{pLabel}</span>
+                          <span className="text-sm font-black text-navy">{rec.title}</span>
+                          <span className={cn('text-[10px] font-black px-1.5 py-0.5 rounded-full border', priorityBadge)}>
+                            {{ haute: 'Urgent', moyenne: 'Moyen', faible: 'Faible' }[rec.priority]}
+                          </span>
                         </div>
                         <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{rec.description}</p>
                       </div>
@@ -371,87 +400,97 @@ function DashboardView({ diagnostic, setActiveView, logout }: { diagnostic: Diag
                     </div>
                   );
                 })}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
 
         {/* Right column */}
         <div className="space-y-4">
-          {/* Compliance score */}
-          {score !== null ? (
-            <Card className="border-0 shadow-sm bg-white rounded-2xl overflow-hidden">
-              <CardHeader className="px-6 py-5 border-b border-slate-50">
-                <CardTitle className="text-base font-black text-navy">Score de Conformité</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 flex flex-col items-center gap-4">
-                <ComplianceRing score={score} size="lg" />
-                <p className="text-xs text-center text-slate-500 font-medium max-w-[180px]">
-                  {score < 40 ? 'Des lacunes importantes nécessitent votre attention.' : score < 70 ? 'Bonne base — quelques points à renforcer.' : 'Votre entreprise est bien protégée.'}
-                </p>
-                <Button asChild variant="outline" size="sm" className="w-full rounded-xl border-navy/15 text-navy font-black text-xs">
-                  <Link href="/diagnostic">Refaire le diagnostic</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ) : null}
 
-          {/* Expert card */}
-          <Card className="border-0 shadow-sm bg-navy rounded-2xl overflow-hidden relative">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(239,108,119,0.2),transparent_60%)]" />
-            <CardContent className="p-5 relative space-y-4">
-              <div className="flex items-center gap-3">
+          {/* Expert card — redesigned */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f2447] to-navy p-5 text-white">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-coral/15 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative">
+              <p className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-3">Votre expert dédié</p>
+              <div className="flex items-center gap-3 mb-4">
                 <div className="relative">
-                  <Avatar className="h-12 w-12 ring-2 ring-coral/30">
+                  <Avatar className="h-12 w-12 ring-2 ring-white/20">
                     <AvatarImage src={EXPERT.avatar} />
-                    <AvatarFallback className="bg-slate-700 text-white font-black">AH</AvatarFallback>
+                    <AvatarFallback className="bg-slate-700 font-black">AH</AvatarFallback>
                   </Avatar>
-                  <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-navy" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-navy" />
                 </div>
                 <div>
-                  <p className="font-black text-white text-sm">{EXPERT.name}</p>
+                  <p className="font-black text-sm text-white">{EXPERT.name}</p>
                   <p className="text-white/50 text-[11px] font-medium">{EXPERT.role}</p>
-                  <p className="text-green-400 text-[10px] font-black flex items-center gap-1 mt-0.5">
-                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />En ligne · répond en {EXPERT.responseTime}
+                  <p className="text-emerald-400 text-[10px] font-black mt-0.5 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                    En ligne · {EXPERT.responseTime}
                   </p>
                 </div>
               </div>
-              <Button
+              <button
                 onClick={() => setActiveView('chat')}
-                className="w-full bg-coral hover:bg-coral/90 text-white font-black rounded-xl py-2.5 text-sm"
+                className="w-full flex items-center justify-center gap-2 bg-coral hover:bg-coral/90 text-white text-sm font-black rounded-xl py-2.5 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-coral/20"
               >
-                <MessageSquare className="w-4 h-4 mr-2" />Démarrer la conversation
-              </Button>
-            </CardContent>
-          </Card>
+                <MessageSquare className="w-4 h-4" />
+                Démarrer la conversation
+              </button>
+            </div>
+          </div>
+
+          {/* Compliance (if available) */}
+          {score !== null && (
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+              <h3 className="text-xs font-black text-navy uppercase tracking-wider mb-4">Score de conformité</h3>
+              <div className="flex items-center gap-4">
+                <ComplianceRing score={score} size="md" />
+                <div className="flex-1">
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                    {score < 40 ? 'Des lacunes importantes nécessitent votre attention immédiate.' :
+                      score < 70 ? 'Bonne base — quelques points à renforcer.' :
+                        'Votre entreprise est bien protégée.'}
+                  </p>
+                  <Link href="/diagnostic" className="mt-2 inline-flex items-center gap-1 text-xs font-black text-navy hover:text-coral transition-colors">
+                    Refaire le diagnostic <ChevronRight className="w-3 h-3" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Quick actions */}
-          <Card className="border-0 shadow-sm bg-white rounded-2xl overflow-hidden">
-            <CardHeader className="px-5 py-4 border-b border-slate-50">
-              <CardTitle className="text-sm font-black text-navy">Actions Rapides</CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 space-y-1">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <p className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Actions rapides</p>
+            <div className="p-2">
               {[
-                { label: 'Uploader un document', icon: Upload, onClick: () => setActiveView('documents') },
-                { label: 'Voir mes factures', icon: CreditCard, onClick: () => setActiveView('billing') },
-                { label: 'Mon diagnostic', icon: Activity, href: '/diagnostic' },
-              ].map((item) => (
-                item.href ? (
-                  <Link key={item.label} href={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors group">
-                    <item.icon className="w-4 h-4 text-slate-400 group-hover:text-navy" />
-                    <span className="text-sm font-bold text-slate-600 group-hover:text-navy">{item.label}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-navy ml-auto" />
+                { label: 'Uploader un document', icon: Upload, onClick: () => setActiveView('documents'), color: 'text-blue-500' },
+                { label: 'Voir mes factures', icon: CreditCard, onClick: () => setActiveView('billing'), color: 'text-amber-500' },
+                { label: 'Mon diagnostic', icon: Activity, href: '/diagnostic', color: 'text-coral' },
+                { label: 'Contacter un avocat', icon: MessageSquare, onClick: () => setActiveView('chat'), color: 'text-violet-500' },
+              ].map((item) => {
+                const inner = (
+                  <>
+                    <div className={cn('w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center shrink-0', item.color)}>
+                      <item.icon className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-sm font-semibold text-slate-700 flex-1">{item.label}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                  </>
+                );
+                return item.href ? (
+                  <Link key={item.label} href={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors">
+                    {inner}
                   </Link>
                 ) : (
-                  <button key={item.label} onClick={item.onClick} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors group">
-                    <item.icon className="w-4 h-4 text-slate-400 group-hover:text-navy" />
-                    <span className="text-sm font-bold text-slate-600 group-hover:text-navy">{item.label}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-navy ml-auto" />
+                  <button key={item.label} onClick={item.onClick} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors">
+                    {inner}
                   </button>
-                )
-              ))}
-            </CardContent>
-          </Card>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1488,7 +1527,7 @@ function EspaceClientContent() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              {activeView === 'dashboard' && <DashboardView diagnostic={diagnostic} setActiveView={setActiveView} logout={logout} />}
+              {activeView === 'dashboard' && <DashboardView diagnostic={diagnostic} setActiveView={setActiveView} />}
               {activeView === 'chat' && <ChatView />}
               {activeView === 'documents' && <DocumentsView userId={user.id} />}
               {activeView === 'billing' && <BillingView />}
