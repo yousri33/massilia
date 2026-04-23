@@ -47,9 +47,10 @@ import MorphPanel from '@/components/ui/ai-input';
 import { AuthGuard } from '@/components/AuthGuard';
 import { FileUpload } from '@/components/FileUpload';
 import { FileList } from '@/components/FileList';
+import { FolderManager } from '@/components/FolderManager';
 import { useAuth } from '@/hooks/useAuth';
 import { getDiagnostic } from '@/lib/storage';
-import { getDocuments, getNotifications, markNotificationRead } from '@/lib/db';
+import { getDocuments, getNotifications, markNotificationRead, getProfile } from '@/lib/db';
 import { supabase } from '@/lib/supabase';
 import { computeComplianceScore, generateRecommendations } from '@/lib/compliance';
 import type { StoredFile, DiagnosticAnswers, Recommendation } from '@/lib/types';
@@ -985,7 +986,6 @@ function ChatView() {
 // ─── Documents View ───────────────────────────────────────────────────────────
 function DocumentsView({ userId }: { userId: string }) {
   const [files, setFilesState] = React.useState<(StoredFile & { filePath?: string })[]>([]);
-  const [view, setView] = React.useState<'list' | 'grid'>('list');
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -1010,50 +1010,19 @@ function DocumentsView({ userId }: { userId: string }) {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-black text-navy tracking-tight">Mon Legal Drive</h2>
-          <p className="text-slate-500 text-sm mt-0.5">Gérez vos documents juridiques en toute sécurité.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" onClick={() => setView(view === 'list' ? 'grid' : 'list')} className="rounded-xl border-slate-200 h-9 w-9">
-                  {view === 'list' ? <Grid3X3 className="h-4 w-4" /> : <List className="h-4 w-4" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Changer de vue</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <p className="text-slate-500 text-sm mt-0.5">Organisez vos documents avec des dossiers et drag & drop.</p>
         </div>
       </div>
 
-      {/* Storage info */}
-      {isLoading && (
-        <Card className="border-0 shadow-sm bg-white rounded-2xl">
-          <CardContent className="p-4">
-            <Skeleton className="h-4 w-full" />
-          </CardContent>
-        </Card>
-      )}
+      {/* Folder Manager */}
+      <FolderManager userId={userId} files={files} onUploadComplete={handleUploadComplete} onDelete={handleDelete} />
 
       {/* Upload zone */}
-      <Card className="border-0 shadow-sm bg-white rounded-2xl">
-        <CardContent className="p-5">
-          <FileUpload userId={userId} onUploadComplete={handleUploadComplete} />
-        </CardContent>
-      </Card>
-
-      {/* File list */}
-      <Card className="border-0 shadow-sm bg-white rounded-2xl overflow-hidden">
-        <CardHeader className="px-5 py-4 border-b border-slate-50 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-black text-navy">Documents ({files.length})</CardTitle>
-          <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-navy rounded-xl gap-1">
-            <Filter className="w-3.5 h-3.5" />Filtrer
-          </Button>
-        </CardHeader>
-        <CardContent className="p-4">
-          <FileList files={files} userId={userId} onDelete={handleDelete} />
-        </CardContent>
-      </Card>
+      <div className="rounded-2xl border-2 border-dashed border-navy/20 p-6 text-center hover:border-navy/40 hover:bg-navy/2 transition-all cursor-pointer">
+        <Upload className="w-8 h-8 text-navy/30 mx-auto mb-3" />
+        <p className="font-bold text-navy text-sm">Déposez vos fichiers ici</p>
+        <p className="text-xs text-slate-400 mt-1">ou utilisez le bouton ci-dessus</p>
+      </div>
     </div>
   );
 }
@@ -1142,17 +1111,34 @@ function SettingsView() {
   const [form, setForm] = React.useState({ name: '', company: '', city: '' });
   const [saved, setSaved] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
+  const [isFetching, setIsFetching] = React.useState(true);
 
-  // Sync form whenever the user object is populated or changes
+  // Always fetch fresh data from database when Settings view opens
   React.useEffect(() => {
-    if (user) {
-      setForm({
-        name: user.name ?? '',
-        company: user.company ?? '',
-        city: user.city ?? '',
-      });
-    }
-  }, [user?.id, user?.name, user?.company, user?.city]);
+    if (!user?.id) return;
+
+    const fetchFreshData = async () => {
+      setIsFetching(true);
+      const profile = await getProfile(user.id);
+      if (profile) {
+        setForm({
+          name: profile.name ?? '',
+          company: profile.company ?? '',
+          city: profile.city ?? '',
+        });
+      } else {
+        // Fallback to useAuth user if fetch fails
+        setForm({
+          name: user.name ?? '',
+          company: user.company ?? '',
+          city: user.city ?? '',
+        });
+      }
+      setIsFetching(false);
+    };
+
+    fetchFreshData();
+  }, [user?.id]);
 
   if (!user) return null;
 
