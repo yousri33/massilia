@@ -45,14 +45,10 @@ export default function LoginPage() {
     setIsSubmitting(true);
     const result = await login(data.email, data.password);
     setIsSubmitting(false);
-    if (result.ok) {
-      // Wait for auth state to update before redirecting
-      setTimeout(() => {
-        router.push('/espace-client');
-      }, 500);
-    } else {
+    if (!result.ok) {
       setServerError(result.error ?? 'Erreur de connexion.');
     }
+    // Redirect is handled by the useEffect below once isAuthenticated becomes true
   };
 
   const handleGoogleLogin = async () => {

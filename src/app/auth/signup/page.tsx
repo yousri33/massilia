@@ -86,16 +86,12 @@ export default function SignupPage() {
       city: data.city,
     });
     setIsSubmitting(false);
-    if (result.ok) {
-      // Wait for auth state to update before redirecting
-      setTimeout(() => {
-        router.push('/espace-client');
-      }, 500);
-    } else {
+    if (!result.ok) {
       setServerError(result.error ?? 'Erreur lors de la création du compte.');
       setDirection(-1);
       setStep(1);
     }
+    // Redirect is handled by the useEffect below once isAuthenticated becomes true
   };
 
   return (

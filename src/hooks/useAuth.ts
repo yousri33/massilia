@@ -11,54 +11,36 @@ export function useAuth() {
   const [user, setUser] = useState<MassiliaUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load session on mount and listen for auth changes
   useEffect(() => {
-    const initSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-
+    // First: get the current session synchronously
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         const profile = await fetchProfile(session.user.id);
-        if (profile) {
-          setUser({
-            id: session.user.id,
-            name: profile.name,
-            email: session.user.email || '',
-            company: profile.company,
-            businessType: profile.business_type as any,
-            city: profile.city,
-            createdAt: profile.created_at,
-            onboardingAnswers: undefined,
-          });
-        }
+        setUser(profile ? sessionToUser(session.user, profile) : null);
       }
       setIsLoading(false);
-    };
-
-    initSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        const profile = await fetchProfile(session.user.id);
-        if (profile) {
-          setUser({
-            id: session.user.id,
-            name: profile.name,
-            email: session.user.email || '',
-            company: profile.company,
-            businessType: profile.business_type as any,
-            city: profile.city,
-            createdAt: profile.created_at,
-          });
-        } else {
-          // User logged in but no profile exists (should redirect to complete signup)
-          setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
     });
 
-    return () => subscription?.unsubscribe();
+    // Then: keep in sync with future auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setIsLoading(false);
+          return;
+        }
+
+        if (session?.user) {
+          // Keep loading true while we fetch the profile
+          setIsLoading(true);
+          const profile = await fetchProfile(session.user.id);
+          setUser(profile ? sessionToUser(session.user, profile) : null);
+          setIsLoading(false);
+        }
+      },
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const fetchProfile = async (userId: string) => {
@@ -69,37 +51,37 @@ export function useAuth() {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching profile:', error);
+      console.error('fetchProfile error:', error.message);
       return null;
     }
-
     return data;
   };
+
+  const sessionToUser = (authUser: any, profile: any): MassiliaUser => ({
+    id: authUser.id,
+    name: profile.name,
+    email: authUser.email || '',
+    company: profile.company,
+    businessType: profile.business_type as any,
+    city: profile.city || '',
+    createdAt: profile.created_at,
+  });
 
   const login = useCallback(
     async (email: string, password: string): Promise<{ ok: boolean; error?: string }> => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-      if (error) {
-        return { ok: false, error: error.message };
-      }
-
+      if (error) return { ok: false, error: error.message };
       return { ok: true };
     },
     [],
   );
 
-  const loginWithGoogle = useCallback(async () => {
+  const loginWithGoogle = useCallback(async (): Promise<{ ok: boolean; error?: string }> => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
-
-    if (error) {
-      console.error('Google login error:', error);
-      return { ok: false, error: error.message };
-    }
-
+    if (error) return { ok: false, error: error.message };
     return { ok: true };
   }, []);
 
@@ -108,17 +90,16 @@ export function useAuth() {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: payload.email,
         password: payload.password,
+        options: {
+          // Skip email confirmation — user is immediately active
+          data: { name: `${payload.firstName} ${payload.lastName}` },
+        },
       });
 
-      if (authError) {
-        return { ok: false, error: authError.message };
-      }
+      if (authError) return { ok: false, error: authError.message };
+      if (!authData.user) return { ok: false, error: 'Inscription échouée. Réessayez.' };
 
-      if (!authData.user) {
-        return { ok: false, error: 'Signup failed.' };
-      }
-
-      // Create profile
+      // Insert profile row
       const { error: profileError } = await supabase.from('profiles').insert({
         id: authData.user.id,
         name: `${payload.firstName} ${payload.lastName}`,
@@ -128,11 +109,11 @@ export function useAuth() {
       });
 
       if (profileError) {
-        console.error('Profile creation error:', profileError);
-        return { ok: false, error: (profileError as any).message || 'Erreur lors de la création du profil.' };
+        console.error('Profile insert error:', profileError.message);
+        return { ok: false, error: profileError.message };
       }
 
-      // Insert welcome notification
+      // Welcome notification
       await insertNotification(
         authData.user.id,
         'Bienvenue sur Legal Pilot ! 👋',
@@ -154,23 +135,17 @@ export function useAuth() {
   const updateUser = useCallback(
     async (patch: Partial<MassiliaUser>) => {
       if (!user) return;
-
       const { error } = await supabase
         .from('profiles')
         .update({
-          name: patch.name || user.name,
-          company: patch.company || user.company,
-          city: patch.city || user.city,
+          name: patch.name ?? user.name,
+          company: patch.company ?? user.company,
+          city: patch.city ?? user.city,
         })
         .eq('id', user.id);
 
-      if (error) {
-        console.error('Error updating profile:', error);
-        return;
-      }
-
-      const updated = { ...user, ...patch };
-      setUser(updated);
+      if (error) { console.error('updateUser error:', error.message); return; }
+      setUser({ ...user, ...patch });
     },
     [user],
   );
