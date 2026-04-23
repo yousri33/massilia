@@ -1139,15 +1139,34 @@ function BillingView() {
 // ─── Settings View ────────────────────────────────────────────────────────────
 function SettingsView() {
   const { user, updateUser } = useAuth();
-  const [form, setForm] = React.useState({ name: user?.name ?? '', company: user?.company ?? '', city: user?.city ?? '' });
+  const [form, setForm] = React.useState({ name: '', company: '', city: '' });
   const [saved, setSaved] = React.useState(false);
-  if (!user) return null;
-  const initials = user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+  const [saving, setSaving] = React.useState(false);
 
-  const handleSave = () => {
-    updateUser({ name: form.name, company: form.company, city: form.city });
+  // Sync form whenever the user object is populated or changes
+  React.useEffect(() => {
+    if (user) {
+      setForm({
+        name: user.name ?? '',
+        company: user.company ?? '',
+        city: user.city ?? '',
+      });
+    }
+  }, [user?.id, user?.name, user?.company, user?.city]);
+
+  if (!user) return null;
+
+  const displayName = user.name?.trim() || user.email?.split('@')[0] || '';
+  const initials = displayName
+    ? displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+    : user.email?.[0]?.toUpperCase() ?? '?';
+
+  const handleSave = async () => {
+    setSaving(true);
+    await updateUser({ name: form.name.trim(), company: form.company.trim(), city: form.city.trim() });
+    setSaving(false);
     setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setTimeout(() => setSaved(false), 2500);
   };
 
   return (
@@ -1164,40 +1183,68 @@ function SettingsView() {
         </CardHeader>
         <CardContent className="p-6 space-y-5">
           <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarFallback className="bg-navy text-white font-black text-xl">{initials}</AvatarFallback>
+            <Avatar className="h-16 w-16 ring-2 ring-slate-100">
+              <AvatarFallback className="bg-gradient-to-br from-navy to-[#2d4a7a] text-white font-black text-xl">
+                {initials}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-black text-navy">{user.name}</p>
+              <p className="font-black text-navy text-base">{displayName || user.email}</p>
               <p className="text-sm text-slate-500">{user.email}</p>
-              <p className="text-xs text-slate-400 mt-1">Membre depuis {new Date(user.createdAt).toLocaleDateString('fr-DZ', { month: 'long', year: 'numeric' })}</p>
+              <p className="text-xs text-slate-400 mt-1">
+                Membre depuis {new Date(user.createdAt).toLocaleDateString('fr-DZ', { month: 'long', year: 'numeric' })}
+              </p>
             </div>
           </div>
           <Sep />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-black text-navy uppercase tracking-wider">Nom complet</label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="h-10 rounded-xl border-slate-200 text-sm focus-visible:ring-navy/20" />
+              <Input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Yousri Amrane"
+                className="h-10 rounded-xl border-slate-200 text-sm focus-visible:ring-navy/20"
+              />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-black text-navy uppercase tracking-wider">Email</label>
-              <Input value={user.email} disabled className="h-10 rounded-xl border-slate-200 text-sm opacity-60" />
+              <Input value={user.email} disabled className="h-10 rounded-xl border-slate-200 text-sm opacity-50 cursor-not-allowed" />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-black text-navy uppercase tracking-wider">Entreprise</label>
-              <Input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })}
-                className="h-10 rounded-xl border-slate-200 text-sm focus-visible:ring-navy/20" />
+              <Input
+                value={form.company}
+                onChange={(e) => setForm({ ...form, company: e.target.value })}
+                placeholder="TechStart DZ"
+                className="h-10 rounded-xl border-slate-200 text-sm focus-visible:ring-navy/20"
+              />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-black text-navy uppercase tracking-wider">Ville</label>
-              <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
-                className="h-10 rounded-xl border-slate-200 text-sm focus-visible:ring-navy/20" />
+              <Input
+                value={form.city}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+                placeholder="Alger"
+                className="h-10 rounded-xl border-slate-200 text-sm focus-visible:ring-navy/20"
+              />
             </div>
           </div>
           <div className="flex justify-end">
-            <Button onClick={handleSave} className={cn('font-black rounded-xl px-6 text-sm transition-all', saved ? 'bg-green-500 hover:bg-green-500' : 'bg-navy hover:bg-navy/90')}>
-              {saved ? '✓ Enregistré !' : 'Enregistrer les modifications'}
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className={cn(
+                'text-white font-black rounded-xl px-6 text-sm transition-all min-w-[200px]',
+                saved ? 'bg-green-500 hover:bg-green-500' : 'bg-navy hover:bg-navy/90',
+              )}
+            >
+              {saving ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  Enregistrement…
+                </span>
+              ) : saved ? '✓ Profil mis à jour !' : 'Enregistrer les modifications'}
             </Button>
           </div>
         </CardContent>
