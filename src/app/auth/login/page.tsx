@@ -46,7 +46,10 @@ export default function LoginPage() {
     const result = await login(data.email, data.password);
     setIsSubmitting(false);
     if (result.ok) {
-      router.push('/espace-client');
+      // Wait for auth state to update before redirecting
+      setTimeout(() => {
+        router.push('/espace-client');
+      }, 500);
     } else {
       setServerError(result.error ?? 'Erreur de connexion.');
     }

@@ -87,7 +87,10 @@ export default function SignupPage() {
     });
     setIsSubmitting(false);
     if (result.ok) {
-      router.push('/espace-client');
+      // Wait for auth state to update before redirecting
+      setTimeout(() => {
+        router.push('/espace-client');
+      }, 500);
     } else {
       setServerError(result.error ?? 'Erreur lors de la création du compte.');
       setDirection(-1);
