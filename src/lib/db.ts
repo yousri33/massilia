@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { StoredFile, Recommendation } from './types';
+import type { StoredFile } from './types';
 
 // ─── Cases ───────────────────────────────────────────────────────────────────
 export async function getCases(userId: string) {
@@ -158,4 +158,44 @@ export async function insertNotification(userId: string, title: string, body: st
   }
 
   return true;
+}
+
+// ─── AI Conversations ─────────────────────────────────────────────────────────
+
+export interface AiMessage {
+  role: 'user' | 'model';
+  content: string;
+  created_at?: string;
+}
+
+export async function getAiHistory(userId: string, limit = 60): Promise<AiMessage[]> {
+  const { data, error } = await supabase
+    .from('ai_conversations')
+    .select('role, content, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+    .limit(limit);
+
+  if (error) { console.error('getAiHistory error:', error.message); return []; }
+  return (data || []).map((row: any) => ({ role: row.role, content: row.content, created_at: row.created_at }));
+}
+
+export async function appendAiMessage(userId: string, role: 'user' | 'model', content: string) {
+  const { error } = await supabase
+    .from('ai_conversations')
+    .insert({ user_id: userId, role, content });
+  if (error) console.error('appendAiMessage error:', error.message);
+}
+
+export async function clearAiHistory(userId: string) {
+  const { error } = await supabase.from('ai_conversations').delete().eq('user_id', userId);
+  if (error) console.error('clearAiHistory error:', error.message);
+}
+
+// ─── Profile ──────────────────────────────────────────────────────────────────
+
+export async function getProfile(userId: string) {
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+  if (error) { console.error('getProfile error:', error.message); return null; }
+  return data;
 }

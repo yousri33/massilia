@@ -209,6 +209,19 @@ function StatusBadge({ status }: { status: string }) {
 // ─── Dashboard View ───────────────────────────────────────────────────────────
 function DashboardView({ diagnostic, setActiveView }: { diagnostic: DiagnosticAnswers | null; setActiveView: (v: View) => void }) {
   const { user } = useAuth();
+  const [cases, setCases] = React.useState<any[]>([]);
+  const [casesLoading, setCasesLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (!user?.id) return;
+    import('@/lib/db').then(({ getCases }) => {
+      getCases(user.id).then(data => {
+        setCases(data.length > 0 ? data : DEMO_CASES);
+        setCasesLoading(false);
+      });
+    });
+  }, [user?.id]);
+
   if (!user) return null;
   const firstName = user.name.split(' ')[0];
   const score = diagnostic ? computeComplianceScore(diagnostic) : null;
@@ -294,7 +307,17 @@ function DashboardView({ diagnostic, setActiveView }: { diagnostic: DiagnosticAn
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {DEMO_CASES.map((c) => (
+                {casesLoading ? (
+                  [1,2,3].map(i => (
+                    <TableRow key={i} className="border-slate-50">
+                      <TableCell className="pl-6 py-4"><Skeleton className="h-4 w-40" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                      <TableCell className="hidden md:table-cell"><Skeleton className="h-2 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                      <TableCell className="pr-6 hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : cases.map((c) => (
                   <TableRow key={c.id} className="border-slate-50 hover:bg-slate-50/60 transition-colors cursor-pointer">
                     <TableCell className="pl-6 py-4">
                       <div className="flex items-center gap-3">
@@ -314,7 +337,7 @@ function DashboardView({ diagnostic, setActiveView }: { diagnostic: DiagnosticAn
                       </div>
                     </TableCell>
                     <TableCell><StatusBadge status={c.status} /></TableCell>
-                    <TableCell className="pr-6 text-xs text-slate-400 font-medium hidden lg:table-cell">{c.date}</TableCell>
+                    <TableCell className="pr-6 text-xs text-slate-400 font-medium hidden lg:table-cell">{c.date || c.created_at?.slice(0,10)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -1169,11 +1192,33 @@ function EspaceClientContent() {
   const { user, logout } = useAuth();
   const [activeView, setActiveView] = React.useState<View>('dashboard');
   const [diagnostic, setDiagnosticState] = React.useState<DiagnosticAnswers | null>(null);
+  const [notifications, setNotifications] = React.useState<any[]>([]);
+  const [showNotifs, setShowNotifs] = React.useState(false);
+  const notifRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     const d = getDiagnostic();
     setDiagnosticState(d ?? user?.onboardingAnswers ?? null);
   }, [user]);
+
+  React.useEffect(() => {
+    if (!user?.id) return;
+    getNotifications(user.id).then(setNotifications);
+  }, [user?.id]);
+
+  // Close notif panel on outside click
+  React.useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotifs(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleMarkRead = async (id: string) => {
+    await markNotificationRead(id);
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   if (!user) return null;
   const initials = user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
@@ -1285,10 +1330,70 @@ function EspaceClientContent() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <Input placeholder="Rechercher…" className="pl-9 h-9 w-52 bg-slate-50 border-slate-200 rounded-xl text-xs focus-visible:ring-navy/20" />
             </div>
-            <Button variant="ghost" size="icon" className="relative rounded-xl h-9 w-9 text-slate-500 hover:text-navy hover:bg-slate-100">
-              <Bell className="h-4 w-4" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-coral rounded-full ring-2 ring-white" />
-            </Button>
+            {/* Notification Bell */}
+            <div className="relative" ref={notifRef}>
+              <Button
+                variant="ghost" size="icon"
+                onClick={() => setShowNotifs(v => !v)}
+                className="relative rounded-xl h-9 w-9 text-slate-500 hover:text-navy hover:bg-slate-100"
+              >
+                <Bell className="h-4 w-4" />
+                {notifications.length > 0 && (
+                  <span className="absolute top-1 right-1 h-4 w-4 bg-coral text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white">
+                    {notifications.length > 9 ? '9+' : notifications.length}
+                  </span>
+                )}
+              </Button>
+              {showNotifs && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  className="absolute right-0 top-11 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden"
+                >
+                  <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                    <p className="text-xs font-black text-navy uppercase tracking-widest">Notifications</p>
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={() => notifications.forEach(n => handleMarkRead(n.id))}
+                        className="text-[10px] font-black text-coral hover:underline"
+                      >
+                        Tout marquer lu
+                      </button>
+                    )}
+                  </div>
+                  {notifications.length === 0 ? (
+                    <div className="p-6 text-center">
+                      <Bell className="w-6 h-6 text-slate-200 mx-auto mb-2" />
+                      <p className="text-xs text-slate-400 font-medium">Aucune nouvelle notification</p>
+                    </div>
+                  ) : (
+                    <div className="max-h-72 overflow-y-auto divide-y divide-slate-50">
+                      {notifications.map(n => (
+                        <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
+                          <div className={cn('w-2 h-2 rounded-full mt-1.5 shrink-0', {
+                            'bg-coral': n.type === 'action',
+                            'bg-blue-400': n.type === 'info',
+                            'bg-green-400': n.type === 'success',
+                          })} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-black text-navy">{n.title}</p>
+                            <p className="text-[11px] text-slate-500 font-medium mt-0.5 line-clamp-2">{n.body}</p>
+                            <p className="text-[10px] text-slate-300 mt-1">{new Date(n.created_at).toLocaleDateString('fr-DZ')}</p>
+                          </div>
+                          <button
+                            onClick={() => handleMarkRead(n.id)}
+                            className="text-slate-300 hover:text-coral transition-colors shrink-0 mt-0.5"
+                          >
+                            <CheckCheck className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </div>
           </div>
         </header>
 

@@ -9,7 +9,8 @@ import remarkGfm from "remark-gfm"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
-import { getChatHistory, setChatHistory, getDiagnostic } from "@/lib/storage"
+import { getDiagnostic } from "@/lib/storage"
+import { getAiHistory, appendAiMessage, clearAiHistory } from "@/lib/db"
 
 interface OrbProps {
   dimension?: string
@@ -231,25 +232,15 @@ export function MorphPanel() {
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
-  // Load persisted chat history when user is identified
+  // Load persisted AI history from Supabase on mount
   useEffect(() => {
-    if (user) {
-      const history = getChatHistory(user.id)
-      if (history.length > 0) {
-        setMessages(history.map(m => ({ role: m.role, parts: m.parts })))
+    if (!user?.id) return
+    getAiHistory(user.id).then(rows => {
+      if (rows.length > 0) {
+        setMessages(rows.map(r => ({ role: r.role, parts: [{ text: r.content }] })))
       }
-    }
+    })
   }, [user?.id])
-
-  // Persist chat history on every message change
-  useEffect(() => {
-    if (user && messages.length > 0) {
-      setChatHistory(user.id, messages.map(m => ({
-        ...m,
-        timestamp: new Date().toISOString(),
-      })))
-    }
-  }, [messages, user?.id])
 
   const triggerClose = useCallback((e?: React.MouseEvent) => {
     if (e) {
@@ -286,21 +277,32 @@ export function MorphPanel() {
 
   const sendMessage = useCallback(async (text: string, currentMessages: Message[]) => {
     if (isLoading || !text.trim()) return
+
     const updatedMessages = [...currentMessages, { role: "user" as const, parts: [{ text }] }]
     setMessages(updatedMessages)
     setIsLoading(true)
+
+    // Persist user message to Supabase
+    if (user?.id) await appendAiMessage(user.id, "user", text)
+
     try {
       const diagnostic = getDiagnostic()
-      const userContext = user && diagnostic ? {
+      // Always send full user context even without diagnostic
+      const userContext = user ? {
         name: user.name,
+        firstName: user.name.split(' ')[0],
         company: user.company,
         businessType: user.businessType,
-        businessStage: diagnostic.businessStage,
-        complianceNeeds: diagnostic.complianceNeeds,
+        city: user.city,
+        businessStage: diagnostic?.businessStage ?? null,
+        complianceNeeds: diagnostic?.complianceNeeds ?? [],
+        legalStructure: diagnostic?.legalStructure ?? null,
+        employeesCount: diagnostic?.employeesCount ?? null,
       } : null
 
       const res = await fetch("/api/chat", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text,
           history: currentMessages.map(m => ({ role: m.role, parts: m.parts })),
@@ -308,18 +310,17 @@ export function MorphPanel() {
         }),
       })
       const data = await res.json()
-      
-      if (!res.ok) {
-        throw new Error(data.error || `Error ${res.status}`);
-      }
+      if (!res.ok) throw new Error(data.error || `Error ${res.status}`)
 
-      setMessages(prev => [...prev, { role: "model", parts: [{ text: data.message }] }])
+      const aiText = data.message
+      setMessages(prev => [...prev, { role: "model", parts: [{ text: aiText }] }])
+
+      // Persist AI response to Supabase
+      if (user?.id) await appendAiMessage(user.id, "model", aiText)
     } catch (err: any) {
       console.error(err)
-      setMessages(prev => [...prev, { 
-        role: "model", 
-        parts: [{ text: `⚠️ **Erreur de connexion**\n\n${err.message === 'Failed to fetch' ? 'Le serveur est hors ligne ou la connexion a été interrompue.' : err.message}` }] 
-      }])
+      const errText = `⚠️ **Erreur de connexion**\n\n${err.message === 'Failed to fetch' ? 'Le serveur est hors ligne.' : err.message}`
+      setMessages(prev => [...prev, { role: "model", parts: [{ text: errText }] }])
     } finally {
       setIsLoading(false)
     }
@@ -532,7 +533,7 @@ export function MorphPanel() {
                         type="button"
                         onClick={() => {
                           setMessages([])
-                          if (user) setChatHistory(user.id, [])
+                          if (user?.id) clearAiHistory(user.id)
                         }}
                         className="text-[8px] text-coral/60 hover:text-coral font-black uppercase tracking-widest transition-colors"
                       >

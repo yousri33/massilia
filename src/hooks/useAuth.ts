@@ -16,7 +16,8 @@ export function useAuth() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         const profile = await fetchProfile(session.user.id);
-        setUser(profile ? sessionToUser(session.user, profile) : null);
+        // Fall back to minimal user if profile row is missing (e.g. RLS or first-time)
+        setUser(sessionToUser(session.user, profile ?? {}));
       }
       setIsLoading(false);
     });
@@ -24,6 +25,8 @@ export function useAuth() {
     // Then: keep in sync with future auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('[useAuth] onAuthStateChange event:', event, session?.user?.id);
+
         if (event === 'SIGNED_OUT') {
           setUser(null);
           setIsLoading(false);
@@ -34,7 +37,9 @@ export function useAuth() {
           // Keep loading true while we fetch the profile
           setIsLoading(true);
           const profile = await fetchProfile(session.user.id);
-          setUser(profile ? sessionToUser(session.user, profile) : null);
+          // IMPORTANT: even if profile is null (RLS / missing row), still mark
+          // the user as authenticated so the redirect fires.
+          setUser(sessionToUser(session.user, profile ?? {}));
           setIsLoading(false);
         }
       },
@@ -51,25 +56,28 @@ export function useAuth() {
       .maybeSingle();
 
     if (error) {
-      console.error('fetchProfile error:', error.message);
+      console.error('[useAuth] fetchProfile error:', error.message, error.code);
       return null;
     }
+    console.log('[useAuth] fetchProfile result:', data);
     return data;
   };
 
   const sessionToUser = (authUser: any, profile: any): MassiliaUser => ({
     id: authUser.id,
-    name: profile.name,
+    name: profile?.name ?? authUser.user_metadata?.name ?? '',
     email: authUser.email || '',
-    company: profile.company,
-    businessType: profile.business_type as any,
-    city: profile.city || '',
-    createdAt: profile.created_at,
+    company: profile?.company ?? '',
+    businessType: (profile?.business_type as any) ?? null,
+    city: profile?.city ?? '',
+    createdAt: profile?.created_at ?? authUser.created_at,
   });
 
   const login = useCallback(
     async (email: string, password: string): Promise<{ ok: boolean; error?: string }> => {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log('[useAuth] login attempt for:', email);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log('[useAuth] signInWithPassword result — error:', error?.message, 'user:', data?.user?.id);
       if (error) return { ok: false, error: error.message };
       return { ok: true };
     },
