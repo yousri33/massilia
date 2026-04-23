@@ -202,10 +202,10 @@ const Typewriter = ({ text, onComplete }: { text: string; onComplete?: () => voi
 }
 
 const QUICK_ACTIONS = [
-  "Créer mon entreprise",
-  "Documents requis",
-  "Besoin DPO ?",
-  "Tarifs et packs",
+  "Recherche Jurisprudence (RAG)",
+  "Analyse de Contrat (Law)",
+  "Vérifier Conformité DB",
+  "Synthèse Juridique",
 ]
 
 interface Message {
@@ -399,7 +399,7 @@ export function MorphPanel() {
                 <div className="flex items-center gap-3">
                   <ColorOrb dimension="24px" className={cn(isLoading && "animate-pulse")} tones={{ base: "oklch(95% 0 0)" }} />
                   <p className="text-white/70 font-black text-[10px] uppercase tracking-widest leading-none">
-                    AI ASSISTANCE
+                    LEGAL RAG ENGINE
                   </p>
                 </div>
                 <button 
@@ -431,12 +431,12 @@ export function MorphPanel() {
                         </p>
                         <p className="text-white/80 text-sm font-bold">
                           {user?.company
-                            ? `Assistant juridique pour ${user.company}`
-                            : "Je suis l'assistant Legal Pilot."}
+                            ? `Connecté à la DB : Contexte "${user.company}" chargé.`
+                            : "Système RAG Juridique (Production)"}
                         </p>
                     </div>
                     <p className="text-white/40 text-xs font-bold leading-relaxed max-w-[240px]">
-                        Posez votre question pour obtenir une orientation juridique personnalisée en Algérie.
+                        Retrieval-Augmented Generation activé. Posez votre question pour interroger la base de données légale.
                     </p>
                     <div className="flex flex-wrap gap-2 justify-center">
                       {QUICK_ACTIONS.map((action) => (
@@ -526,7 +526,7 @@ export function MorphPanel() {
                 </form>
                 <div className="mt-3 flex justify-between items-center px-1">
                    <p className="text-[8px] text-white/20 font-black uppercase tracking-widest">
-                      Gemini 2.0 Flash — Aberkane Massilia
+                      Legal RAG Engine (Production) — Law DB Connected
                    </p>
                    {messages.length > 0 && (
                       <button

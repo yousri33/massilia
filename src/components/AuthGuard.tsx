@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 function BrandedLoader() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8f9fc]">
+    <div className="min-h-screen flex flex-col items-center justify-center">
       <motion.div
         className="flex flex-col items-center gap-6"
         initial={{ opacity: 0, y: 16 }}
@@ -40,17 +40,15 @@ function BrandedLoader() {
             />
           </svg>
 
-          {/* Logo centered inside ring */}
-          <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm flex items-center justify-center bg-white">
-            <Image
-              src="/logo.png"
-              alt="Legal Pilot"
-              width={40}
-              height={40}
-              className="object-contain"
-              priority
-            />
-          </div>
+          {/* Logo — no box, no background */}
+          <Image
+            src="/logo.png"
+            alt="Legal Pilot"
+            width={40}
+            height={40}
+            className="object-contain"
+            priority
+          />
         </div>
 
         {/* Brand name */}

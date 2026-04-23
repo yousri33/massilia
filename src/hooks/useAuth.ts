@@ -36,10 +36,24 @@ export function useAuth() {
         }
 
         if (session?.user) {
-          if (!silentEvent) setIsLoading(true);
-          const profile = await fetchProfile(session.user.id);
-          setUser(sessionToUser(session.user, profile ?? {}));
-          if (!silentEvent) setIsLoading(false);
+          // If we already have the user data, don't trigger the loader again
+          // Just silently update if needed, but we can usually skip the fetch
+          // if we already have the profile to prevent tab-switching loading loops.
+          setUser((currentUser) => {
+            if (currentUser?.id === session.user.id) {
+               return currentUser; // Keep existing object reference to prevent re-renders
+            }
+            
+            // If it's a new user or first load, fetch profile
+            (async () => {
+              if (!silentEvent) setIsLoading(true);
+              const profile = await fetchProfile(session.user.id);
+              setUser(sessionToUser(session.user, profile ?? {}));
+              if (!silentEvent) setIsLoading(false);
+            })();
+
+            return currentUser;
+          });
         }
       },
     );
