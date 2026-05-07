@@ -2,18 +2,33 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button'
 
 const TRUST_BADGES = [
   { icon: '🏛️', label: 'Avocat certifié' },
-  { icon: '🔒', label: 'RGPD' },
+  { icon: '🔒', label: 'Loi 18-07' },
   { icon: '⚡', label: 'Réponse 24h' },
   { icon: '🇩🇿', label: 'Droit algérien' },
 ]
 
+const TAGLINES = [
+  { prefix: 'Votre entreprise,', highlight: 'conforme', suffix: '— en 24h.' },
+  { prefix: 'Votre conformité', highlight: 'Loi 18-07', suffix: 'maîtrisée — en 24h.' },
+  { prefix: 'Votre structure,', highlight: 'sécurisée', suffix: '— en 24h.' },
+]
+
 const HeroSection = () => {
+  const [currentWordIndex, setCurrentWordIndex] = React.useState(0)
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentWordIndex((prev) => (prev + 1) % TAGLINES.length)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [])
+
   const handleScrollToHowItWorks = () => {
     const el = document.getElementById('how-it-works')
     if (el) el.scrollIntoView({ behavior: 'smooth' })
@@ -42,22 +57,23 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1, ease: 'easeOut' }}
-            className="font-serif font-bold text-5xl sm:text-6xl lg:text-[5rem] leading-[1.05] tracking-tight mb-8 text-navy"
+            className="font-serif font-bold text-5xl sm:text-6xl lg:text-[4.5rem] leading-[1.1] tracking-tight mb-8 text-navy min-h-[3.3em]"
           >
-            Votre entreprise,{' '}
-            <span className="relative">
-              <span className="text-coral">conforme</span>
-            </span>{' '}
-            et protégée —{' '}
-            <span className="relative">
-              en 24h.
-              <motion.span
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ duration: 1, delay: 1 }}
-                className="absolute bottom-1 left-0 w-full h-1 bg-coral origin-left"
-              />
-            </span>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentWordIndex}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+              >
+                {TAGLINES[currentWordIndex].prefix}{' '}
+                <span className="text-coral">
+                  {TAGLINES[currentWordIndex].highlight}
+                </span>{' '}
+                {TAGLINES[currentWordIndex].suffix}
+              </motion.div>
+            </AnimatePresence>
           </motion.h1>
 
           <motion.p
@@ -66,8 +82,8 @@ const HeroSection = () => {
             transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
             className="text-lg sm:text-xl text-navy/70 max-w-lg mb-8 leading-relaxed"
           >
-            De la création de société au DPO, Massilia gère vos obligations juridiques
-            pour que vous puissiez vous concentrer sur l&apos;essentiel.
+            De la genèse de votre structure à l&apos;excellence de votre conformité Loi 18-07. 
+            Une protection juridique d&apos;exception pour libérer votre ambition.
           </motion.p>
 
           {/* CTAs */}

@@ -3,53 +3,84 @@
 import React from 'react'
 import { CreativePricing, type PricingTier } from "@/components/ui/creative-pricing"
 import { SpeedAssurance } from "@/components/ui/speed-assurance"
-import { Sparkles, Zap, Star, Layout, Heart } from "lucide-react"
+import { Sparkles, Zap, Star, Layout, Heart, Shield, Bot, Users } from "lucide-react"
 
 const packTiers: (PricingTier & { unit: string })[] = [
   {
-    name: 'Pack Création',
-    price: 19900,
-    unit: 'DA HT',
-    description: 'L\'essentiel pour un départ propre et structuré.',
+    name: 'Pack Création & Structuration',
+    price: 'Sur devis',
+    unit: '',
+    description: 'Startups / nouvelles entreprises',
     icon: <Zap className="w-7 h-7" />,
     color: 'coral',
     features: [
+      'Choix forme juridique',
       'Rédaction des statuts',
-      'Annonce légale incluse',
-      'Assistance juriste dédiée',
-      'Dossier CNRC complet',
-      'KBIS reçu sous 48h'
+      'Constitution dossier légal',
+      'Immatriculation',
+      'Conseils organisationnels',
+      'Génération documents'
     ],
   },
   {
-    name: 'Pack Zen (Expert)',
-    price: 0,
-    unit: 'DA HT',
-    description: 'Le gold standard de l\'entrepreneur moderne.',
-    icon: <Star className="w-7 h-7" />,
+    name: 'Pack Modification & Mise à jour',
+    price: 'Sur devis',
+    unit: '',
+    description: 'PME / entreprises en évolution',
+    icon: <Layout className="w-7 h-7" />,
     color: 'navy',
     features: [
-      'Tout le Pack Création',
-      'Modèles de contrats',
-      'Logiciel de gestion',
-      'Support prioritaire 24/7',
-      'Accès Premium illimité'
+      'Modification des statuts',
+      'Changement gérance / siège',
+      'Mise à jour documents légaux',
+      'Renouvellement contrats'
     ],
     popular: true,
   },
   {
-    name: 'Pack Modification',
-    price: 14500,
-    unit: 'DA HT',
-    description: 'Faites évoluer votre structure sans friction.',
-    icon: <Layout className="w-7 h-7" />,
+    name: 'Pack Fermeture / Dissolution',
+    price: 'Sur devis',
+    unit: '',
+    description: 'Entreprises en fin de cycle',
+    icon: <Shield className="w-7 h-7" />,
     color: 'coral',
     features: [
-      'Transfert de siège',
-      'Changement de gérant',
-      'Augmentation de capital',
-      'Mise à jour des statuts',
-      'Assistance formalités'
+      'Procédure de dissolution',
+      'PV assemblée',
+      'Liquidation',
+      'Radiation registre'
+    ],
+  },
+]
+
+const abonnementTiers: (PricingTier & { unit: string })[] = [
+  {
+    name: 'Abonnement Suivi & Conformité',
+    price: 'Sur devis',
+    unit: '/ mois',
+    description: 'Toutes entreprises',
+    icon: <Heart className="w-7 h-7" />,
+    color: 'navy',
+    features: [
+      'Veille réglementaire',
+      'Alertes légales',
+      'Mise à jour documents',
+      'Tableau de bord conformité'
+    ],
+    popular: true,
+  },
+  {
+    name: 'Abonnement DPO externalisé',
+    price: 'Sur devis',
+    unit: '/ mois',
+    description: 'Entreprises traitant des données',
+    icon: <Star className="w-7 h-7" />,
+    color: 'coral',
+    features: [
+      'Cartographie des traitements',
+      'Registre RGPD (ou équivalent)',
+      'Déclarations ANPDP',
+      'Suivi conformité données'
     ],
   },
 ]
@@ -62,14 +93,43 @@ export const PacksSection = () => {
       
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <CreativePricing 
-          tag="L'Innovation Juridique en Algérie" 
-          title="Investissez dans votre propre succès"
-          description="Des tarifs transparents, sans frais cachés, pour propulser votre croissance sur le marché algérien."
-          tiers={packTiers.map(p => ({
-            ...p,
-            price: p.price.toLocaleString('fr-FR')
-          }))} 
+          tag="Packs d'Intervention" 
+          title="Des solutions adaptées à chaque étape"
+          description="Des tarifs transparents pour propulser votre croissance sur le marché algérien."
+          tiers={packTiers} 
         />
+
+        <div className="mt-8">
+          <CreativePricing 
+            tag="Abonnements" 
+            title="Votre conformité en continu"
+            description="Une protection juridique d'exception pour libérer votre ambition."
+            tiers={abonnementTiers} 
+          />
+        </div>
+
+        {/* Extra Features Section */}
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="p-8 rounded-3xl bg-navy/5 border border-navy/10 flex items-start gap-4 hover:shadow-lg transition-all">
+            <div className="w-12 h-12 rounded-xl bg-coral/10 text-coral flex items-center justify-center shrink-0">
+              <Bot className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-xl font-serif font-bold text-navy mb-2">Chat bot intégré</h4>
+              <p className="text-navy/70 font-medium">Un assistant IA disponible 24/7 pour répondre à toutes vos questions juridiques de premier niveau.</p>
+            </div>
+          </div>
+          
+          <div className="p-8 rounded-3xl bg-coral/5 border border-coral/10 flex items-start gap-4 hover:shadow-lg transition-all">
+            <div className="w-12 h-12 rounded-xl bg-navy/10 text-navy flex items-center justify-center shrink-0">
+              <Users className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-xl font-serif font-bold text-navy mb-2">Réseau d'avocats</h4>
+              <p className="text-navy/70 font-medium">Accès privilégié à nos avocats partenaires, prise de rendez-vous et consultations légales personnalisées.</p>
+            </div>
+          </div>
+        </div>
 
         <div className="mt-20">
           <SpeedAssurance />

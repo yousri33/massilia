@@ -51,7 +51,12 @@ function CreativePricing({
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative z-10">
+            <div className={cn(
+                "grid grid-cols-1 gap-10 relative z-10",
+                tiers.length === 1 ? "md:grid-cols-1 max-w-sm mx-auto" : 
+                tiers.length === 2 ? "md:grid-cols-2 max-w-4xl mx-auto" : 
+                "md:grid-cols-3"
+            )}>
                 {tiers.map((tier, index) => (
                     <div
                         key={tier.name}

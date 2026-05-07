@@ -107,7 +107,7 @@ export default function SignupPage() {
         />
         <div className="relative z-10">
           <Link href="/">
-            <Image src="/logo.png" alt="Massilia Legal" width={140} height={40} className="brightness-0 invert" />
+            <Image src="/logo.png" alt="Legal Pilot" width={140} height={40} className="brightness-0 invert" />
           </Link>
         </div>
         <div className="relative z-10 space-y-6">
@@ -132,7 +132,7 @@ export default function SignupPage() {
           </div>
         </div>
         <div className="relative z-10 text-white/30 text-xs">
-          © 2026 Massilia Legal. Tous droits réservés.
+          © 2026 Legal Pilot. Tous droits réservés.
         </div>
       </div>
 
@@ -141,7 +141,7 @@ export default function SignupPage() {
         <div className="w-full max-w-md">
           <div className="mb-6 lg:hidden">
             <Link href="/">
-              <Image src="/logo.png" alt="Massilia Legal" width={120} height={36} />
+              <Image src="/logo.png" alt="Legal Pilot" width={120} height={36} />
             </Link>
           </div>
 
@@ -284,7 +284,7 @@ export default function SignupPage() {
                     <label className="text-sm font-black text-navy">Nom de l&apos;entreprise</label>
                     <Input
                       {...form2.register('company')}
-                      placeholder="Massilia Digital"
+                      placeholder="VOTRE ENTREPRISE"
                       className="h-12 rounded-2xl border-navy/20 bg-white text-navy placeholder:text-navy/30 focus-visible:ring-coral"
                     />
                     {form2.formState.errors.company && (

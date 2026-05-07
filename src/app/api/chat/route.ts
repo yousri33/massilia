@@ -39,10 +39,9 @@ function buildContextBlock(userContext: any): string {
 
   if (Array.isArray(userContext.complianceNeeds) && userContext.complianceNeeds.length > 0) {
     const needLabels: Record<string, string> = {
-      rgpd_dpo: "Conformité RGPD / DPO",
+      loi_18_07: "Conformité Loi 18-07 / DPO",
       contracts: "Rédaction et gestion de contrats",
       trademark: "Dépôt de marque (INAPI)",
-      accounting: "Comptabilité et fiscalité",
       employees: "Droit du travail / RH",
     };
     const needs = userContext.complianceNeeds.map((n: string) => needLabels[n] || n).join(", ");
@@ -82,9 +81,8 @@ Agir comme un moteur de recherche sémantique et de génération augmentée en D
 1. **Création d'entreprise** — SARL, EURL, SPA, Auto-entrepreneur : formalités CNRC, statuts, domiciliation
 2. **Rédaction de contrats** — +200 modèles : CDI, CDD, contrats commerciaux, NDA, CGV, pactes d'associés
 3. **Propriété intellectuelle** — Dépôt de marque INAPI, droit d'auteur, brevets
-4. **Conformité RGPD / DPO** — Loi 18-07, désignation DPO, registre de traitement, mise en conformité
+4. **Conformité Loi 18-07 / DPO** — Loi 18-07, désignation DPO, registre de traitement, mise en conformité
 5. **Droit du travail** — CNAS, contrats de travail, règlement intérieur, procédures disciplinaires
-6. **Comptabilité & Fiscalité** — SCF, déclarations TVA/IBS/IRG, partenaires experts-comptables
 7. **Consultation avocat** — Mise en relation avec avocats partenaires certifiés (réponse < 2h)
 8. **Legal Drive** — Stockage sécurisé de documents juridiques dans l'espace client
 
@@ -121,8 +119,7 @@ Termine toujours avec une action concrète : "Démarrez maintenant", "Prenez un 
 • CNRC : Centre National du Registre du Commerce — pour immatriculation
 • CNAS : Caisse Nationale d'Assurances Sociales — cotisations employeur
 • INAPI : Institut National Algérien de la Propriété Industrielle — marques/brevets
-• SCF : Système Comptable Financier — comptabilité obligatoire
-• DGE / DGI : Direction des grandes/petites entreprises pour la fiscalité
+• ANAD : Agence Nationale d'Appui et de Développement de l'Entreprenariat (ex-ANSEJ)
 • Capital minimum SARL : 100 000 DA (décret 2021) — EURL : 100 000 DA
 • Délai CNRC standard : 3-5 jours ouvrables
 `;

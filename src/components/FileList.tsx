@@ -11,7 +11,7 @@ const CATEGORY_LABELS: Record<FileCategory, string> = {
   statuts: 'Statuts',
   contrat: 'Contrat',
   identite: 'Identité',
-  fiscal: 'Fiscal',
+  administratif: 'Administratif',
   autre: 'Autre',
 };
 
@@ -19,7 +19,7 @@ const CATEGORY_COLORS: Record<FileCategory, string> = {
   statuts: 'bg-blue-100 text-blue-700 border-blue-200',
   contrat: 'bg-purple-100 text-purple-700 border-purple-200',
   identite: 'bg-amber-100 text-amber-700 border-amber-200',
-  fiscal: 'bg-green-100 text-green-700 border-green-200',
+  administratif: 'bg-green-100 text-green-700 border-green-200',
   autre: 'bg-navy/10 text-navy/60 border-navy/20',
 };
 

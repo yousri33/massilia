@@ -78,11 +78,9 @@ const EMPLOYEES_OPTIONS: { value: EmployeesCount; label: string; sub: string }[]
 ];
 
 const COMPLIANCE_OPTIONS: { value: ComplianceNeed; label: string; icon: React.ElementType; desc: string }[] = [
-  { value: 'rgpd_dpo', label: 'RGPD / DPO', icon: Lock, desc: 'Protection des données personnelles' },
+  { value: 'loi_18_07', label: 'Loi 18-07 / DPO', icon: Lock, desc: 'Protection des données personnelles' },
   { value: 'contracts', label: 'Contrats', icon: FileText, desc: 'Rédaction et révision contractuelle' },
   { value: 'trademark', label: 'Marques & brevets', icon: Award, desc: 'Propriété intellectuelle' },
-  { value: 'employees', label: 'Paie & RH', icon: Users, desc: 'Gestion des ressources humaines' },
-  { value: 'accounting', label: 'Comptabilité', icon: BarChart3, desc: 'Obligations comptables' },
   { value: 'none', label: 'Aucun besoin précis', icon: HelpCircle, desc: "Je ne sais pas encore" },
 ];
 
@@ -269,7 +267,7 @@ export default function DiagnosticPage() {
       {/* Synchronized Header */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-border/40 bg-white/80 backdrop-blur-md sticky top-0 z-20">
         <Link href="/">
-          <Image src="/logo.png" alt="Massilia Legal" width={90} height={28} className="object-contain" />
+          <Image src="/logo.png" alt="Legal Pilot" width={90} height={28} className="object-contain" />
         </Link>
         <Badge variant="outline" className="text-navy border-navy/20 bg-navy/5 font-black text-[10px] uppercase tracking-widest px-3 py-1 rounded-full">
           Étape {step} sur 5
@@ -452,7 +450,7 @@ export default function DiagnosticPage() {
                               type="email"
                               value={data.contactEmail}
                               onChange={(e) => setData({ ...data, contactEmail: e.target.value })}
-                              placeholder="vous@entreprise.dz"
+                              placeholder="legal_pilot@gmail.com"
                               className="h-12 rounded-xl bg-white/50 border-border/60 focus:bg-white focus:ring-2 focus:ring-coral/20 focus:border-coral transition-all text-base shadow-sm"
                             />
                           </div>

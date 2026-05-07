@@ -19,11 +19,10 @@ export function computeComplianceScore(answers: DiagnosticAnswers): number {
   // Has trademark protection → +10
   if (answers.complianceNeeds.includes('trademark')) score += 10;
 
-  // Has DPO / RGPD → +15
-  if (answers.complianceNeeds.includes('rgpd_dpo')) score += 15;
+  // Has DPO / Loi 18-07 → +15
+  if (answers.complianceNeeds.includes('loi_18_07')) score += 15;
 
-  // Has HR/payroll compliance → +10
-  if (answers.complianceNeeds.includes('employees')) score += 10;
+
 
   return Math.min(100, score);
 }
@@ -40,7 +39,7 @@ export function generateRecommendations(
       id: 'legal-structure',
       title: 'Choisir votre structure juridique',
       description:
-        'SARL, EURL, SPA… chaque structure a des implications fiscales et sociales différentes. Notre équipe vous guide vers le meilleur choix pour ' +
+        'SARL, EURL, SPA… chaque structure a des implications juridiques et sociales différentes. Notre équipe vous guide vers le meilleur choix pour ' +
         user.company +
         '.',
       priority: 'haute',
@@ -62,11 +61,11 @@ export function generateRecommendations(
     });
   }
 
-  // No DPO / RGPD
-  if (!answers.complianceNeeds.includes('rgpd_dpo')) {
+  // No DPO / Loi 18-07
+  if (!answers.complianceNeeds.includes('loi_18_07')) {
     recs.push({
       id: 'dpo',
-      title: 'Nommer un DPO & conformité RGPD',
+      title: 'Nommer un DPO & conformité Loi 18-07',
       description:
         "La loi 18-07 impose aux entreprises traitant des données personnelles de désigner un DPO. Évitez les sanctions avec notre module de conformité.",
       priority: answers.businessStage === 'established' ? 'haute' : 'moyenne',
@@ -88,34 +87,7 @@ export function generateRecommendations(
     });
   }
 
-  // Has employees but no HR compliance
-  if (
-    answers.employeesCount !== '0' &&
-    !answers.complianceNeeds.includes('employees')
-  ) {
-    recs.push({
-      id: 'hr',
-      title: 'Conformité RH & droit du travail',
-      description:
-        "Avec des employés, vous êtes soumis au Code du travail algérien : contrats, CNAS, congés. Mettez-vous en conformité dès maintenant.",
-      priority: 'haute',
-      serviceLink: '/juridique',
-      icon: 'Users',
-    });
-  }
 
-  // No accounting
-  if (!answers.complianceNeeds.includes('accounting')) {
-    recs.push({
-      id: 'accounting',
-      title: 'Mise en place comptable & fiscale',
-      description:
-        "Toute entreprise algérienne doit tenir une comptabilité conforme au SCF. Anticipez vos obligations avec notre partenaire expert-comptable.",
-      priority: 'faible',
-      serviceLink: '/',
-      icon: 'Calculator',
-    });
-  }
 
   return recs;
 }

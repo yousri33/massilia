@@ -22,7 +22,7 @@ export const NanoBanner = () => {
             <div className="flex items-center gap-2">
               <Sparkles size={14} className="text-white/80 animate-pulse" />
               <p>
-                OFFRE SPÉCIALE : Création d’entreprise + Comptabilité = <span className="underline decoration-white/40 decoration-2 underline-offset-4">0€ HT</span>
+                OFFRE SPÉCIALE : Création d’entreprise + Conformité Loi 18-07 = <span className="underline decoration-white/40 decoration-2 underline-offset-4">Premier mois offert</span>
               </p>
             </div>
             

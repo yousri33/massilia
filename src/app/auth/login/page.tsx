@@ -72,7 +72,7 @@ export default function LoginPage() {
         />
         <div className="relative z-10">
           <Link href="/">
-            <Image src="/logo.png" alt="Massilia Legal" width={140} height={40} className="brightness-0 invert" />
+            <Image src="/logo.png" alt="Legal Pilot" width={140} height={40} className="brightness-0 invert" />
           </Link>
         </div>
         <div className="relative z-10 space-y-6">
@@ -96,7 +96,7 @@ export default function LoginPage() {
           </div>
         </div>
         <div className="relative z-10 text-white/30 text-xs">
-          © 2026 Massilia Legal. Tous droits réservés.
+          © 2026 Legal Pilot. Tous droits réservés.
         </div>
       </div>
 
@@ -110,7 +110,7 @@ export default function LoginPage() {
         >
           <div className="mb-8 lg:hidden">
             <Link href="/">
-              <Image src="/logo.png" alt="Massilia Legal" width={120} height={36} />
+              <Image src="/logo.png" alt="Legal Pilot" width={120} height={36} />
             </Link>
           </div>
 

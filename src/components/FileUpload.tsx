@@ -15,7 +15,7 @@ function detectCategory(name: string): FileCategory {
   if (lower.includes('statut')) return 'statuts';
   if (lower.includes('contrat')) return 'contrat';
   if (lower.includes('cin') || lower.includes('passeport') || lower.includes('identit')) return 'identite';
-  if (lower.includes('fiscal') || lower.includes('impot') || lower.includes('nif')) return 'fiscal';
+  if (lower.includes('fiscal') || lower.includes('impot') || lower.includes('nif') || lower.includes('admin')) return 'administratif';
   return 'autre';
 }
 

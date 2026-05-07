@@ -9,7 +9,7 @@ import {
   LayoutDashboard, MessageSquare, FileText, CreditCard, Settings,
   Search, Bell, LogOut, Send, Paperclip, CheckCheck, ArrowRight,
   TrendingUp, TrendingDown, Building2, FileSignature, ShieldCheck,
-  Award, Users, Calculator, ChevronRight, Sparkles,
+  Award, Users, Scale, ChevronRight, Sparkles,
   Clock, CheckCircle2, Circle, AlertCircle, Download,
   Mail, MapPin, Calendar, Activity,
   FileCheck, Zap, Star, Filter, Grid3X3,
@@ -72,7 +72,7 @@ const DEMO_CASES = [
   { id: '1', title: 'Rédaction Statuts SARL', type: 'Création', date: '25 Mar 2026', status: 'En cours', progress: 65, priority: 'haute' },
   { id: '2', title: 'Contrat de Distribution Oran', type: 'Contrat', date: '20 Mar 2026', status: 'Terminé', progress: 100, priority: 'faible' },
   { id: '3', title: 'Dépôt de Marque INAPI', type: 'PI', date: '18 Mar 2026', status: 'Action requise', progress: 30, priority: 'haute' },
-  { id: '4', title: 'Conformité RGPD/DPO', type: 'Conformité', date: '10 Mar 2026', status: 'En cours', progress: 50, priority: 'moyenne' },
+  { id: '4', title: 'Conformité Loi 18-07/DPO', type: 'Conformité', date: '10 Mar 2026', status: 'En cours', progress: 50, priority: 'moyenne' },
 ];
 
 const DEMO_MESSAGES = [
@@ -89,7 +89,7 @@ const DEMO_INVOICES = [
 ];
 
 const ICON_MAP: Record<string, React.ElementType> = {
-  Building2, FileSignature, ShieldCheck, Award, Users, Calculator,
+  Building2, FileSignature, ShieldCheck, Award, Users, Scale,
 };
 
 // ─── Animated Counter ────────────────────────────────────────────────────────
@@ -539,7 +539,7 @@ function ChatView() {
     amine: EXPERT,
     sarah: {
       name: 'Me. Sarah Bensmail',
-      role: 'Conseil Fiscal',
+      role: 'Conseil Juridique',
       avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&h=200&auto=format&fit=crop',
       online: false,
       responseTime: '< 4h'

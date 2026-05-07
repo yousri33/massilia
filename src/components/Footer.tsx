@@ -86,17 +86,21 @@ export const Footer = () => {
           <div className="relative">
             <h4 className="text-xs font-black mb-6 text-navy uppercase tracking-[0.2em]">Contactez-nous</h4>
             <ul className="flex flex-col gap-5 text-sm text-navy/70 font-bold uppercase tracking-tight relative z-10">
-              <li className="flex items-center gap-3.5 group cursor-pointer">
-                <div className="w-9 h-9 rounded-xl bg-coral/10 border border-coral/20 flex items-center justify-center text-coral group-hover:bg-coral group-hover:text-white transition-all shadow-sm">
-                  <Mail size={16} />
-                </div>
-                <span className="group-hover:text-coral transition-colors truncate">contact@legalpilot.dz</span>
+              <li className="group">
+                <a href="mailto:legal_pilot@gmail.com" className="flex items-center gap-3.5 cursor-pointer">
+                  <div className="w-9 h-9 rounded-xl bg-coral/10 border border-coral/20 flex items-center justify-center text-coral group-hover:bg-coral group-hover:text-white transition-all shadow-sm">
+                    <Mail size={16} />
+                  </div>
+                  <span className="group-hover:text-coral transition-colors truncate">legal_pilot@gmail.com</span>
+                </a>
               </li>
-              <li className="flex items-center gap-3.5 group cursor-pointer">
-                <div className="w-9 h-9 rounded-xl bg-coral/10 border border-coral/20 flex items-center justify-center text-coral group-hover:bg-coral group-hover:text-white transition-all shadow-sm">
-                  <Phone size={16} />
-                </div>
-                <span className="group-hover:text-coral transition-colors">+213 (0) 23 45 67 89</span>
+              <li className="group">
+                <a href="https://wa.me/213775753965" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3.5 cursor-pointer">
+                  <div className="w-9 h-9 rounded-xl bg-coral/10 border border-coral/20 flex items-center justify-center text-coral group-hover:bg-coral group-hover:text-white transition-all shadow-sm">
+                    <Phone size={16} />
+                  </div>
+                  <span className="group-hover:text-coral transition-colors">+213 775 75 39 65</span>
+                </a>
               </li>
             </ul>
             
@@ -122,9 +126,7 @@ export const Footer = () => {
               <Link href="#" className="hover:text-coral transition-colors">Confidentialité</Link>
             </div>
           </div>
-          <div className="mt-6 text-center text-[10px] text-navy/40 font-bold uppercase tracking-widest">
-            <p>Made with <span className="text-coral">❤️</span> à Alger</p>
-          </div>
+
         </div>
       </div>
     </footer>

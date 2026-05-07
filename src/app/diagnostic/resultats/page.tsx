@@ -165,7 +165,7 @@ export default function ResultatsPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            message: "En tant qu'expert juridique spécialisé dans le droit algérien, analyse ces résultats de diagnostic. Fournis une analyse stratégique concise sous forme de points clés (bullet points). Sois direct, utilise un ton professionnel et expert. Structure ta réponse en Markdown avec des listes à puces. Concentre-toi sur les risques immédiats et les opportunités de structuration.",
+            message: "En tant qu'expert juridique spécialisé dans le droit algérien, analyse ces résultats de diagnostic. Fournis une analyse stratégique ultra-concise (maximum 3 bullet points très courts). Sois très direct, utilise un ton professionnel. Structure ta réponse en Markdown. Ne fais pas d'introduction ni de conclusion, va droit au but sur les risques immédiats et opportunités.",
             userContext: {
               name: answers.contactName,
               company: "Mon entreprise",
@@ -248,7 +248,7 @@ export default function ResultatsPage() {
       {/* Synchronized Header */}
       <header className="flex items-center justify-between px-6 py-3 border-b border-border/40 bg-white/80 backdrop-blur-md sticky top-0 z-20">
         <Link href="/">
-          <Image src="/logo.png" alt="Massilia Legal" width={90} height={28} className="object-contain" />
+          <Image src="/logo.png" alt="Legal Pilot" width={90} height={28} className="object-contain" />
         </Link>
         <div className="flex items-center gap-4">
           <Link href="/diagnostic">

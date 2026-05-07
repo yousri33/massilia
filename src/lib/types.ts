@@ -1,9 +1,7 @@
 export type ComplianceNeed =
-  | 'rgpd_dpo'
+  | 'loi_18_07'
   | 'contracts'
   | 'trademark'
-  | 'accounting'
-  | 'employees'
   | 'none';
 
 export type BusinessType =
@@ -57,7 +55,7 @@ export type FileCategory =
   | 'statuts'
   | 'contrat'
   | 'identite'
-  | 'fiscal'
+  | 'administratif'
   | 'autre';
 
 export type FileStatus = 'pending' | 'validated' | 'rejected';
