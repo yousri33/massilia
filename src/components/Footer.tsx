@@ -13,19 +13,9 @@ export const Footer = () => {
       <div className="border-b border-navy/10 relative z-10">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div className="flex items-center gap-6">
-               <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-navy/10 shrink-0 shadow-xl bg-[#e6cfb2]/30">
-                  <Image 
-                    src="/images/legal-expert-clock.jpg" 
-                    alt="Newsletter support" 
-                    fill 
-                    className="object-cover"
-                  />
-               </div>
-               <div>
-                  <h3 className="text-xl font-serif font-black mb-1.5 text-navy">Restez informé</h3>
-                  <p className="text-sm text-navy/80 font-medium max-w-sm">Recevez l'essentiel juridique pour votre entreprise en Algérie.</p>
-               </div>
+            <div>
+              <h3 className="text-xl font-serif font-black mb-1.5 text-navy">Restez informé</h3>
+              <p className="text-sm text-navy/80 font-medium max-w-sm">Recevez l'essentiel juridique pour votre entreprise en Algérie.</p>
             </div>
             <div className="flex gap-2.5 flex-col sm:flex-row">
               <input
@@ -82,7 +72,7 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Contact & Mascot */}
+          {/* Contact */}
           <div className="relative">
             <h4 className="text-xs font-black mb-6 text-navy uppercase tracking-[0.2em]">Contactez-nous</h4>
             <ul className="flex flex-col gap-5 text-sm text-navy/70 font-bold uppercase tracking-tight relative z-10">
@@ -103,16 +93,6 @@ export const Footer = () => {
                 </a>
               </li>
             </ul>
-            
-            {/* Waving Mascot */}
-            <div className="absolute -bottom-12 -right-48 w-52 h-72 pointer-events-none hidden lg:block">
-              <Image 
-                src="/images/image.png" 
-                alt="Friendly mascot" 
-                fill 
-                className="object-contain object-bottom"
-              />
-            </div>
           </div>
 
         </div>
