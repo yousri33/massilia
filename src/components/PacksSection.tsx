@@ -102,7 +102,7 @@ export const PacksSection = () => {
         <div className="mt-8">
           <CreativePricing 
             tag="Abonnements" 
-            title="Votre conformité en continu"
+            title=""
             description="Une protection juridique d'exception pour libérer votre ambition."
             tiers={abonnementTiers} 
           />
