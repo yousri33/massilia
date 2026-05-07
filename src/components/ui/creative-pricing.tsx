@@ -14,9 +14,9 @@ interface PricingTier {
 }
 
 function CreativePricing({
-    tag = "Simple Pricing",
-    title = "Faites décoller votre entreprise",
-    description = "Des tarifs transparents pour chaque étape de votre aventure entrepreneuriale",
+    tag,
+    title,
+    description,
     tiers,
 }: {
     tag?: string;
@@ -25,31 +25,37 @@ function CreativePricing({
     tiers: PricingTier[];
 }) {
     return (
-        <div className="w-full max-w-6xl mx-auto px-6 py-24 relative overflow-visible">
-            <div className="text-center space-y-8 mb-20 relative z-10">
-                {/* Brand Badge */}
-                <div className="flex justify-center">
-                    <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border-2 border-navy/10 bg-background shadow-sm">
-                        <span className="flex h-2 w-2 rounded-full bg-navy animate-pulse" />
-                        <span className="text-[10px] font-bold text-navy uppercase tracking-widest leading-none">
-                            {tag}
-                        </span>
-                    </div>
-                </div>
-
-                <div className="relative inline-block">
-                    <h2 className="font-serif font-bold text-4xl sm:text-5xl lg:text-6xl text-navy leading-[1.1] tracking-tight px-4">
-                        {title}
-                        <div className="absolute -right-12 top-0 text-3xl animate-pulse rotate-12 hidden md:block">
-                            ✨
+        <div className="w-full max-w-6xl mx-auto px-6 py-12 relative overflow-visible">
+            {title && (
+                <div className="text-center space-y-8 mb-12 relative z-10">
+                    {/* Brand Badge */}
+                    {tag && (
+                        <div className="flex justify-center">
+                            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border-2 border-navy/10 bg-background shadow-sm">
+                                <span className="flex h-2 w-2 rounded-full bg-navy animate-pulse" />
+                                <span className="text-[10px] font-bold text-navy uppercase tracking-widest leading-none">
+                                    {tag}
+                                </span>
+                            </div>
                         </div>
-                    </h2>
+                    )}
+
+                    <div className="relative inline-block">
+                        <h2 className="font-serif font-bold text-4xl sm:text-5xl lg:text-6xl text-navy leading-[1.1] tracking-tight px-4">
+                            {title}
+                            <div className="absolute -right-12 top-0 text-3xl animate-pulse rotate-12 hidden md:block">
+                                ✨
+                            </div>
+                        </h2>
+                    </div>
+                    
+                    {description && (
+                        <p className="font-medium text-lg sm:text-xl text-navy/60 max-w-2xl mx-auto leading-relaxed italic">
+                            {description}
+                        </p>
+                    )}
                 </div>
-                
-                <p className="font-medium text-lg sm:text-xl text-navy/60 max-w-2xl mx-auto leading-relaxed italic">
-                    {description}
-                </p>
-            </div>
+            )}
 
             <div className={cn(
                 "grid grid-cols-1 gap-10 relative z-10",
