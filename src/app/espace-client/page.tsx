@@ -1337,7 +1337,7 @@ function SettingsView() {
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Yousri Amrane"
+                placeholder="Ahmed Mansouri"
                 className="h-10 rounded-xl border-slate-200 text-sm focus-visible:ring-navy/20"
               />
             </div>

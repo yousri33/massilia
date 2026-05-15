@@ -438,7 +438,7 @@ export default function DiagnosticPage() {
                             <Input
                               value={data.contactName}
                               onChange={(e) => setData({ ...data, contactName: e.target.value })}
-                              placeholder="Yousri Amrane"
+                              placeholder="Ahmed Mansouri"
                               className="h-12 rounded-xl bg-white/50 border-border/60 focus:bg-white focus:ring-2 focus:ring-coral/20 focus:border-coral transition-all text-base shadow-sm"
                             />
                           </div>

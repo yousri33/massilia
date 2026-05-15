@@ -187,7 +187,7 @@ export default function SignupPage() {
                       <label className="text-sm font-black text-navy">Prénom</label>
                       <Input
                         {...form1.register('firstName')}
-                        placeholder="Yousri"
+                        placeholder="Ahmed"
                         className="h-12 rounded-2xl border-navy/20 bg-white text-navy placeholder:text-navy/30 focus-visible:ring-coral"
                       />
                       {form1.formState.errors.firstName && (
