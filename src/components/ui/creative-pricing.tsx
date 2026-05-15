@@ -140,7 +140,7 @@ function CreativePricing({
                                     "text-xl font-medium",
                                     (tier.color === 'navy' || tier.color === 'coral') ? "text-white/60" : "text-navy/50 dark:text-zinc-400"
                                 )}>
-                                    {tier.unit || "€/mois"}
+                                    {tier.unit || "DA"}
                                 </span>
                             </div>
 

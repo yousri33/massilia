@@ -115,7 +115,7 @@ export const ServicesGrid = () => {
             </motion.div>
           ))}
           
-          {/* Card Special pour l’offre à 0€ */}
+          {/* Card Special pour l’offre à 0 DA */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -128,7 +128,7 @@ export const ServicesGrid = () => {
               <div className="absolute top-[-20%] right-[-20%] w-60 h-60 bg-coral rounded-full blur-[80px] opacity-20 group-hover:opacity-40 transition-all duration-700" />
               <div className="absolute bottom-[-10%] left-[-10%] w-50 h-50 bg-white rounded-full blur-[100px] opacity-10" />
 
-              <h3 className="text-4xl font-serif font-black mb-6 z-10 leading-tight">Démarrer à <span className="text-coral">0€</span></h3>
+              <h3 className="text-4xl font-serif font-black mb-6 z-10 leading-tight">Démarrer à <span className="text-coral">0 DA</span></h3>
               <p className="text-white/80 mb-10 font-medium leading-relaxed z-10 text-lg">
                  Lancez votre activité sans investir un centime en honoraires juridiques. 
                  <span className="block mt-4 text-white font-bold underline decoration-coral decoration-2">Offre limitée aux premiers inscrits.</span>
